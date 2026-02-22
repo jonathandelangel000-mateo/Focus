@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - Mi Agenda</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root { --fondo: #121212; --tarjeta: #1e1e1e; --texto: #ffffff; --acento: #00f2ff; }
+        * { box-sizing: border-box; font-family: sans-serif; }
+        body { background-color: var(--fondo); color: var(--texto); margin: 0; padding: 20px; }
+        
+        /* Cabecera */
+        .header-agenda { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-circular { background: #1e1e1e; border: 1px solid #333; color: var(--acento); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 1.2rem; cursor: pointer; }
+        #mes-titulo { cursor: pointer; font-size: 1.4rem; font-weight: bold; color: var(--acento); }
+
+        /* Cinta de Días */
+        .semana-container { display: flex; justify-content: space-between; background: var(--tarjeta); padding: 15px 10px; border-radius: 15px; border: 1px solid #333; margin-bottom: 5px; }
+        .dia-item { display: flex; flex-direction: column; align-items: center; width: 40px; cursor: pointer; }
+        .dia-numero { font-size: 1rem; font-weight: bold; margin-top: 5px; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+        .dia-item.seleccionado .dia-numero { background: var(--acento); color: #000; box-shadow: 0 0 10px var(--acento); }
+
+        /* Marcas debajo de los días */
+        .marcas-contenedor { display: flex; gap: 2px; height: 4px; margin-top: 4px; justify-content: center; }
+        .punto { width: 4px; height: 4px; border-radius: 50%; background: #444; }
+        .punto.activo { background: var(--acento); box-shadow: 0 0 5px var(--acento); }
+
+        .divisor-neon { width: 100%; height: 1px; background: linear-gradient(to right, transparent, var(--acento), transparent); margin: 20px 0; opacity: 0.4; }
+        
+        /* Título Dinámico */
+        .programacion-header { font-size: 1.1rem; color: #888; margin-bottom: 15px; }
+        .programacion-header b { color: var(--acento); }
+
+        /* LISTA DE TAREAS (ESTILO NOTAS) */
+        .tarea-item {
+            background: var(--tarjeta);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            border-left: 5px solid var(--acento);
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .tarea-item h3 { margin: 0 0 5px 0; font-size: 1.1rem; padding-right: 30px; }
+        .tarea-item p { margin: 0; color: #bbb; font-size: 0.9rem; line-height: 1.4; }
+        .tarea-item .fecha-tag { font-size: 0.7rem; color: var(--acento); margin-top: 10px; display: block; text-align: right; }
+
+        /* Menú Kebab */
+        .opciones-tarea { position: absolute; top: 10px; right: 10px; }
+        .btn-puntos { background: none; border: none; color: var(--acento); font-size: 1.2rem; cursor: pointer; }
+        .menu-desplegable {
+            display: none; position: absolute; right: 0; top: 0;
+            background: #2a2a2a; border: 1px solid var(--acento);
+            border-radius: 20px; padding: 2px 8px; flex-direction: row; gap: 5px; z-index: 100;
+        }
+        .menu-desplegable button { background: none; border: none; color: white; padding: 5px; font-size: 1rem; cursor: pointer; }
+
+        /* MODALES SELECCIÓN */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--fondo); z-index: 200; display: none; padding: 20px; }
+        .grid-seleccion { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .item-sel { background: var(--tarjeta); border: 1px solid #333; padding: 15px; text-align: center; border-radius: 10px; color: white; cursor: pointer; }
+        .item-sel:active { border-color: var(--acento); color: var(--acento); }
+    </style>
+</head>
+<body>
+
+    <div id="pantalla-agenda">
+        <header class="header-agenda">
+            <a href="index.html" class="btn-circular">←</a>
+            <h1 id="mes-titulo" onclick="abrirMeses()">Febrero</h1>
+            <button class="btn-circular" onclick="location.href='tareas.html'">+</button>
+        </header>
+
+        <div class="semana-container" id="cinta-dias"></div>
+        <div class="divisor-neon"></div>
+
+        <div class="programacion-header" id="info-dia">
+            Programación para <b id="dia-texto">Domingo 22</b>
+        </div>
+
+        <main id="lista-tareas-container">
+            </main>
+    </div>
+
+    <div id="modal-meses" class="modal">
+        <header class="header-agenda">
+            <button class="btn-circular" onclick="cerrarModales()">←</button>
+            <h2>Meses</h2>
+            <div style="width:45px"></div>
+        </header>
+        <div class="grid-seleccion" id="grid-meses-body"></div>
+    </div>
+
+    <div id="modal-dias" class="modal">
+        <header class="header-agenda">
+            <button class="btn-circular" onclick="abrirMeses()">←</button>
+            <h2 id="nombre-mes-sel">Días</h2>
+            <div style="width:45px"></div>
+        </header>
+        <div class="grid-seleccion" id="grid-dias-body" style="grid-template-columns: repeat(5, 1fr);"></div>
+    </div>
+
+    <script>
+        let fechaActual = new Date();
+        const nombresMeses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const nombresDias = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            actualizarInterfaz();
+        });
+
+        function actualizarInterfaz() {
+            renderizarCinta();
+            renderizarTareas();
+            document.getElementById('mes-titulo').innerText = nombresMeses[fechaActual.getMonth()];
+            document.getElementById('dia-texto').innerText = `${nombresDias[fechaActual.getDay()]} ${fechaActual.getDate()}`;
+        }
+
+        function renderizarCinta() {
+            const cinta = document.getElementById('cinta-dias');
+            cinta.innerHTML = '';
+            for (let i = -3; i <= 3; i++) {
+                let d = new Date(fechaActual);
+                d.setDate(fechaActual.getDate() + i);
+                let sel = i === 0 ? 'seleccionado' : '';
+                
+                // Marca si hay tareas
+                const tieneTareas = checkTareas(d);
+                
+                cinta.innerHTML += `
+                    <div class="dia-item ${sel}" onclick="cambiarDia('${d.toISOString()}')">
+                        <span style="font-size:0.7rem; color:#888;">${nombresDias[d.getDay()].substring(0,2)}</span>
+                        <span class="dia-numero">${d.getDate()}</span>
+                        <div class="marcas-contenedor">
+                            <div class="punto ${tieneTareas ? 'activo' : ''}"></div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function renderizarTareas() {
+            const container = document.getElementById('lista-tareas-container');
+            const tareas = JSON.parse(localStorage.getItem('focus-tareas')) || [];
+            
+            const filtradas = tareas.filter(t => {
+                const d = new Date(t.fecha);
+                return d.getDate() === fechaActual.getDate() && d.getMonth() === fechaActual.getMonth();
+            });
+
+            if(filtradas.length === 0) {
+                container.innerHTML = `<p style="text-align:center; color:#555; margin-top:40px;">No hay nada programado para hoy.</p>`;
+                return;
+            }
+
+            container.innerHTML = filtradas.map(t => `
+                <div class="tarea-item">
+                    <div class="opciones-tarea">
+                        <button class="btn-puntos" onclick="toggleMenu(${t.id})">⋮</button>
+                        <div id="menu-${t.id}" class="menu-desplegable">
+                            <button onclick="editarTarea(${t.id})">✏️</button>
+                            <button onclick="borrarTarea(${t.id})" style="color:#ff4444">🗑</button>
+                        </div>
+                    </div>
+                    <h3>${t.titulo}</h3>
+                    <p>${t.descripcion || 'Sin descripción adicional'}</p>
+                    <span class="fecha-tag">🕒 ${t.hora || 'Todo el día'}</span>
+                </div>
+            `).join('');
+        }
+
+        // --- LÓGICA DE MODALES ---
+        function abrirMeses() {
+            cerrarModales();
+            const grid = document.getElementById('grid-meses-body');
+            grid.innerHTML = nombresMeses.map((m, i) => `<div class="item-sel" onclick="abrirDias(${i})">${m}</div>`).join('');
+            document.getElementById('modal-meses').style.display = 'block';
+        }
+
+        function abrirDias(mesIdx) {
+            cerrarModales();
+            const grid = document.getElementById('grid-dias-body');
+            document.getElementById('nombre-mes-sel').innerText = nombresMeses[mesIdx];
+            let totalDias = new Date(2026, mesIdx + 1, 0).getDate();
+            grid.innerHTML = '';
+            for(let d=1; d<=totalDias; d++) {
+                grid.innerHTML += `<div class="item-sel" onclick="irADia(${d}, ${mesIdx})">${d}</div>`;
+            }
+            document.getElementById('modal-dias').style.display = 'block';
+        }
+
+        function irADia(d, m) {
+            fechaActual = new Date(2026, m, d);
+            actualizarInterfaz();
+            cerrarModales();
+        }
+
+        // --- FUNCIONES EXTRA ---
+        function cambiarDia(iso) { fechaActual = new Date(iso); actualizarInterfaz(); }
+        function cerrarModales() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
+        function checkTareas(date) {
+            const tareas = JSON.parse(localStorage.getItem('focus-tareas')) || [];
+            return tareas.some(t => {
+                const d = new Date(t.fecha);
+                return d.getDate() === date.getDate() && d.getMonth() === date.getMonth();
+            });
+        }
+        function toggleMenu(id) {
+            const m = document.getElementById(`menu-${id}`);
+            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+        }
+        function borrarTarea(id) {
+            if(confirm("¿Borrar tarea?")) {
+                let tareas = JSON.parse(localStorage.getItem('focus-tareas')) || [];
+                tareas = tareas.filter(t => t.id !== id);
+                localStorage.setItem('focus-tareas', JSON.stringify(tareas));
+                actualizarInterfaz();
+            }
+        }
+    </script>
+</body>
+</html>
