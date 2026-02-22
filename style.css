@@ -1,0 +1,295 @@
+:root {
+    --fondo: #121212;
+    --tarjeta: #1e1e1e;
+    --texto: #ffffff;
+    --acento:#00f2ff ;
+}
+
+body {
+    background-color: var(--fondo);
+    color: var(--texto);
+    font-family: sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+header h1 {
+    color: var(--acento);
+    margin-bottom: 5px;
+}
+
+.card {
+    background: var(--tarjeta);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.grid-botones {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.btn-menu {
+    background: var(--tarjeta);
+    color: var(--texto);
+    border: 2px solid var(--acento);
+    padding: 25px 10px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    /* Añade esta línea para el efecto neón: */
+    box-shadow: 0 0 10px rgba(0, 242, 255, 0.2); 
+}
+
+
+.btn-menu:active {
+    background: var(--acento);
+    color: var(--fondo);
+}
+
+/* Control de Pantallas */
+.pantalla {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Botones y Entradas */
+.btn-retroceder {
+    background: none;
+    border: none;
+    color: var(--acento);
+    font-size: 1.1rem;
+    padding: 10px 0;
+    cursor: pointer;
+}
+
+/* Quitar fondo blanco y bordes feos de los inputs */
+input[type="text"], textarea {
+    width: 100%;
+    background: #1e1e1e; /* Fondo igual a las tarjetas */
+    border: 1px solid #333;
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    box-sizing: border-box;
+    outline: none;
+    font-family: sans-serif;
+}
+
+input[type="text"]:focus, textarea:focus {
+    border-color: var(--acento); /* Brillo azul al escribir */
+}
+
+/* Diseño de las notas en la lista */
+.nota-item {
+    background: #1e1e1e;
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 15px;
+    border-left: 5px solid var(--acento);
+    position: relative;
+}
+
+/* Limitar a dos renglones el contenido */
+.nota-item p {
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Número de renglones */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: #bbb;
+    margin: 5px 0;
+}
+/* Botón de tres puntos */
+.opciones-nota {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.btn-puntos {
+    background: none;
+    border: none;
+    color: var(--acento);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0 10px;
+    line-height: 1;
+}
+
+/* Menú desplegable oculto */
+.menu-desplegable {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 30px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 8px;
+    z-index: 10;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
+.menu-desplegable button {
+    background: none;
+    border: none;
+    color: #ff4444;
+    padding: 12px 20px;
+    width: 100%;
+    text-align: left;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.menu-desplegable button:active {
+    background: #333;
+}
+
+.btn-accion {
+    background: var(--acento);
+    color: #000;
+    border: none;
+    padding: 15px;
+    width: 100%;
+    border-radius: 10px;
+    font-weight: bold;
+    box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
+}
+
+.nota-item {
+    background: var(--tarjeta);
+    padding: 15px;
+    border-radius: 10px;
+    margin-top: 15px;
+    border-left: 5px solid var(--acento);
+}
+/* Hacer que la nota parezca cliqueable */
+.nota-item {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.nota-item:active {
+    transform: scale(0.98);
+    background: #252525;
+}
+
+/* Evitar que el botón de los tres puntos active la lectura */
+.opciones-nota {
+    z-index: 5;
+}
+.menu-desplegable button {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #eee; /* Color neutro para editar/compartir */
+}
+
+/* El botón de borrar se queda en rojo */
+.btn-menu-borrar {
+    color: #ff4444 !important;
+}
+
+.menu-desplegable button:hover {
+    background: #333;
+}
+/* Cabecera especial para edición */
+.header-edicion {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #333;
+}
+
+/* Botón Guardar arriba a la derecha */
+.btn-guardar-header {
+    background: var(--acento);
+    color: #000;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 0.9rem;
+}
+
+/* Contenedor principal que ocupa todo el alto */
+.main-full {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 100px); /* Ajusta según el tamaño de tu header */
+    margin-top: 15px;
+}
+
+/* Inputs que ocupan todo el ancho y alto disponible */
+.input-full {
+    font-size: 1.5rem;
+    font-weight: bold;
+    background: transparent !important;
+    border: none !important;
+    margin-bottom: 10px;
+}
+
+.area-full {
+    flex-grow: 1; /* Esto hace que el textarea use todo el espacio sobrante */
+    background: transparent !important;
+    border: none !important;
+    resize: none;
+    font-size: 1.1rem;
+    line-height: 1.5;
+}
+/* Contenedor de los puntos (arriba a la derecha) */
+.opciones-nota {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 20; /* Por encima de la nota */
+}
+
+.btn-puntos {
+    background: none;
+    border: none;
+    color: var(--acento);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+}
+
+/* MENÚ HORIZONTAL Y PEQUEÑO */
+.menu-desplegable {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 0; /* Ahora sale al lado de los puntos */
+    background: #2a2a2a;
+    border: 1px solid var(--acento);
+    border-radius: 20px; /* Redondeado tipo cápsula */
+    z-index: 100;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.8);
+    flex-direction: row; /* Pone los botones en línea */
+    padding: 2px 10px;
+}
+
+.menu-desplegable button {
+    background: none;
+    border: none;
+    color: white;
+    padding: 8px;
+    font-size: 1rem;
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.btn-menu-borrar {
+    color: #ff4444 !important;
+}

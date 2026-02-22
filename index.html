@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Agenda Pro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="pantalla-inicio" class="pantalla">
+        <header>
+            <h1>Mi Día</h1>
+            <p id="fecha-actual"></p>
+        </header>
+        <main>
+            <section class="card">
+                <h2>Próxima Tarea</h2>
+                <div id="tarea-pendiente"><p>No hay tareas</p></div>
+            </section>
+            <div class="grid-botones">
+                <button class="btn-menu" onclick="irA('pantalla-notas')">📝 Notas</button>
+                <button class="btn-menu" onclick="irA('pantalla-agenda')">📅 Agenda</button>
+                <button class="btn-menu" onclick="irA('pantalla-rutina')">🏃 Rutina</button>
+                <button class="btn-menu" onclick="irA('pantalla-config')">⚙️ Ajustes</button>
+            </div>
+        </main>
+    </div>
+
+    <div id="pantalla-notas" class="pantalla" style="display:none;">
+        <header>
+            <button class="btn-retroceder" onclick="window.history.back()">← Volver</button>
+            <h1>Mis Notas</h1>
+        </header>
+        <main>
+            <div class="card">
+                <input type="text" id="titulo-nota" placeholder="Título de la nota">
+                <textarea id="texto-nota" placeholder="Escribe aquí tu pensamiento..."></textarea>
+                <button class="btn-accion" onclick="guardarNota()">Guardar Nota</button>
+            </div>
+            <div id="lista-notas"></div>
+        </main>
+    </div>
+
+    <div id="pantalla-lectura" class="pantalla" style="display:none;">
+        <header>
+            <button class="btn-retroceder" onclick="window.history.back()">← Volver</button>
+            <h1 id="leer-titulo" style="color: var(--acento); margin-top: 20px;"></h1>
+        </header>
+        <main>
+            <div class="card" style="border: none; background: none;">
+                <p id="leer-texto" style="line-height: 1.6; font-size: 1.1rem; color: #eee; white-space: pre-wrap;"></p>
+            </div>
+        </main>
+    </div>
+
+    <div id="pantalla-editar" class="pantalla" style="display:none;">
+        <header class="header-edicion">
+            <button class="btn-retroceder" onclick="window.history.back()">←</button>
+            <h1>Editar</h1>
+            <button class="btn-guardar-header" onclick="actualizarNota()">Guardar</button>
+        </header>
+        <main class="main-full">
+            <input type="hidden" id="edit-id">
+            <input type="text" id="edit-titulo" class="input-full" placeholder="Título">
+            <textarea id="edit-texto" class="area-full" placeholder="Escribe tu nota aquí..."></textarea>
+        </main>
+    </div>
+
+    <div id="pantalla-agenda" class="pantalla" style="display:none;">
+        <header>
+            <button class="btn-retroceder" onclick="window.history.back()">← Volver</button>
+            <h1>Agenda</h1>
+        </header>
+    </div>
+    <div id="pantalla-rutina" class="pantalla" style="display:none;">
+        <header>
+            <button class="btn-retroceder" onclick="window.history.back()">← Volver</button>
+            <h1>Rutina</h1>
+        </header>
+    </div>
+    <div id="pantalla-config" class="pantalla" style="display:none;">
+        <header>
+            <button class="btn-retroceder" onclick="window.history.back()">← Volver</button>
+            <h1>Ajustes</h1>
+        </header>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
