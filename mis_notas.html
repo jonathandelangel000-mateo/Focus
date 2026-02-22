@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - Notas Optimizadas</title>
+    <style>
+        :root {
+            --fondo: #121212;
+            --tarjeta: #1e1e1e;
+            --texto: #ffffff;
+            --acento: #00f2ff;
+        }
+
+        * { box-sizing: border-box; font-family: sans-serif; }
+
+        body {
+            background-color: var(--fondo);
+            color: var(--texto);
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 { color: var(--acento); margin: 0; font-size: 1.5rem; }
+
+        .pantalla { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card {
+            background: var(--tarjeta);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            border: 1px solid #333;
+        }
+
+        input, textarea, select {
+            width: 100%;
+            background: #252525;
+            border: 1px solid #333;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            outline: none;
+        }
+
+        .selector-categorias {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .chip-categoria {
+            background: #252525;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            white-space: nowrap;
+            cursor: pointer;
+            border: 1px solid #444;
+        }
+
+        .chip-categoria.activo {
+            background: var(--acento);
+            color: #000;
+            font-weight: bold;
+            border-color: var(--acento);
+        }
+
+        .btn-accion {
+            background: var(--acento);
+            color: #000;
+            border: none;
+            padding: 12px;
+            width: 100%;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* DISEÑO DE LA NOTA */
+        .nota-item {
+            background: var(--tarjeta);
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 15px;
+            border-left: 5px solid var(--acento);
+            position: relative;
+            padding-bottom: 35px; /* Espacio para la fecha abajo */
+        }
+
+        .nota-categoria {
+            font-size: 0.7rem;
+            color: var(--acento);
+            font-weight: bold;
+            text-transform: uppercase;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .nota-fecha-footer {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 0.65rem;
+            color: #666;
+        }
+
+        .nota-item h3 { margin: 0 0 5px 0; font-size: 1.1rem; padding-right: 25px; }
+        .nota-item p {
+            margin: 0; color: #bbb; font-size: 0.9rem;
+            display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden;
+        }
+
+        /* Menú Horizontal */
+        .opciones-nota { position: absolute; top: 10px; right: 10px; z-index: 10; }
+        .btn-puntos { background: none; border: none; color: var(--acento); font-size: 1.2rem; cursor: pointer; }
+        .menu-desplegable {
+            display: none; position: absolute; right: 0; top: 0;
+            background: #2a2a2a; border: 1px solid var(--acento);
+            border-radius: 20px; padding: 2px 8px; flex-direction: row; gap: 5px;
+        }
+        .menu-desplegable button { background: none; border: none; color: white; padding: 5px; font-size: 1rem; }
+
+        .btn-mini { background: #333; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="pantalla-notas" class="pantalla">
+        <header style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+            <h1>Focus</h1>
+            <button class="btn-mini" onclick="toggleGestor()">⚙️ Secciones</button>
+        </header>
+
+        <div id="gestor-secciones" class="card" style="display: none;">
+            <p style="margin: 0 0 10px 0; font-size: 0.9rem;">Nueva sección:</p>
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="nueva-seccion-nombre" placeholder="Nombre..." style="margin:0;">
+                <button class="btn-mini" style="background: var(--acento); color: black;" onclick="agregarSeccion()">+</button>
+            </div>
+            <div id="lista-secciones-borrar" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 5px;"></div>
+        </div>
+
+        <div class="selector-categorias" id="filtros-lista"></div>
+
+        <main>
+            <div class="card">
+                <select id="categoria-nota"></select>
+                <input type="text" id="titulo-nota" placeholder="Título">
+                <textarea id="texto-nota" placeholder="Contenido..."></textarea>
+                <button class="btn-accion" onclick="guardarNota()">Guardar Nota</button>
+            </div>
+            <div id="lista-notas"></div>
+        </main>
+    </div>
+
+    <div id="pantalla-lectura" class="pantalla" style="display:none; padding-top: 20px;">
+        <button onclick="window.history.back()" class="btn-mini">← Volver</button>
+        <h1 id="leer-titulo" style="margin-top: 20px; color: var(--acento);"></h1>
+        <p id="leer-texto" style="white-space: pre-wrap; color: #ccc; line-height: 1.6;"></p>
+    </div>
+
+    <div id="pantalla-editar" class="pantalla" style="display:none; padding-top: 20px;">
+        <div style="display: flex; justify-content: space-between;">
+            <button onclick="window.history.back()" class="btn-mini">Cancelar</button>
+            <button onclick="actualizarNota()" class="btn-mini" style="background: var(--acento); color: black;">Guardar</button>
+        </div>
+        <input type="hidden" id="edit-id">
+        <input type="text" id="edit-titulo" style="background:transparent; border:none; color:white; font-size: 1.5rem; font-weight: bold; margin-top:20px; outline:none; width:100%;">
+        <textarea id="edit-texto" style="background:transparent; border:none; color:white; height: 60vh; font-size: 1.1rem; resize: none; outline:none; width:100%; margin-top:10px;"></textarea>
+    </div>
+
+    <script>
+        let categoriaActual = 'Todas';
+        let misSecciones = JSON.parse(localStorage.getItem('focus-secciones')) || ['Trabajo', 'Escuela', 'Ideas'];
+
+        document.addEventListener('DOMContentLoaded', () => {
+            history.replaceState({ pantallaId: 'pantalla-notas' }, "", "");
+            actualizarUISecciones();
+            mostrarNotas();
+        });
+
+        function irA(id, saltar = false) {
+            document.querySelectorAll('.pantalla').forEach(p => p.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+            if (!saltar) history.pushState({ pantallaId: id }, "", "");
+        }
+
+        window.onpopstate = (e) => { if (e.state) irA(e.state.pantallaId, true); };
+
+        function toggleGestor() {
+            const g = document.getElementById('gestor-secciones');
+            g.style.display = (g.style.display === 'none') ? 'block' : 'none';
+        }
+
+        function agregarSeccion() {
+            const nombre = document.getElementById('nueva-seccion-nombre').value.trim();
+            if (nombre && !misSecciones.includes(nombre)) {
+                misSecciones.push(nombre);
+                localStorage.setItem('focus-secciones', JSON.stringify(misSecciones));
+                document.getElementById('nueva-seccion-nombre').value = "";
+                actualizarUISecciones();
+            }
+        }
+
+        function eliminarSeccion(nombre) {
+            if (confirm(`¿Eliminar la sección "${nombre}"?`)) {
+                misSecciones = misSecciones.filter(s => s !== nombre);
+                localStorage.setItem('focus-secciones', JSON.stringify(misSecciones));
+                actualizarUISecciones();
+            }
+        }
+
+        function actualizarUISecciones() {
+            const filtros = document.getElementById('filtros-lista');
+            filtros.innerHTML = `<div class="chip-categoria ${categoriaActual === 'Todas' ? 'activo' : ''}" onclick="filtrarPor('Todas')">Todas</div>`;
+            misSecciones.forEach(s => {
+                filtros.innerHTML += `<div class="chip-categoria ${categoriaActual === s ? 'activo' : ''}" onclick="filtrarPor('${s}')">${s}</div>`;
+            });
+
+            const selector = document.getElementById('categoria-nota');
+            selector.innerHTML = `<option value="General">Sin Sección</option>`;
+            misSecciones.forEach(s => {
+                selector.innerHTML += `<option value="${s}">${s}</option>`;
+            });
+
+            const listaBorrar = document.getElementById('lista-secciones-borrar');
+            listaBorrar.innerHTML = misSecciones.map(s => `<span class="chip-categoria" style="border-color: #ff4444;" onclick="eliminarSeccion('${s}')">${s} ✕</span>`).join('');
+        }
+
+        function filtrarPor(cat) {
+            categoriaActual = cat;
+            actualizarUISecciones();
+            mostrarNotas();
+        }
+
+        function guardarNota() {
+            const titulo = document.getElementById('titulo-nota').value;
+            const texto = document.getElementById('texto-nota').value;
+            const categoria = document.getElementById('categoria-nota').value;
+            if(!titulo || !texto) return;
+
+            // FECHA CORTA CON AÑO Y HORA
+            const ahora = new Date();
+            const fechaFormateada = ahora.toLocaleDateString('es-MX', { 
+                day: '2-digit', month: '2-digit', year: '2-digit' 
+            }) + ' ' + ahora.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+
+            const notas = JSON.parse(localStorage.getItem('focus-notas')) || [];
+            notas.push({ titulo, texto, categoria, fecha: fechaFormateada, id: Date.now() });
+            localStorage.setItem('focus-notas', JSON.stringify(notas));
+            
+            document.getElementById('titulo-nota').value = "";
+            document.getElementById('texto-nota').value = "";
+            mostrarNotas();
+        }
+
+        function mostrarNotas() {
+            const contenedor = document.getElementById('lista-notas');
+            let notas = JSON.parse(localStorage.getItem('focus-notas')) || [];
+            if (categoriaActual !== 'Todas') {
+                notas = notas.filter(n => n.categoria === categoriaActual);
+            }
+
+            contenedor.innerHTML = notas.reverse().map(n => `
+                <div class="nota-item" onclick="leerNota(${n.id})">
+                    <span class="nota-categoria">${n.categoria}</span>
+                    <div class="opciones-nota">
+                        <button class="btn-puntos" onclick="event.stopPropagation(); toggleMenu(${n.id})">⋮</button>
+                        <div id="menu-${n.id}" class="menu-desplegable">
+                            <button onclick="event.stopPropagation(); prepararEdicion(${n.id})">✏️</button>
+                            <button style="color:#ff4444" onclick="borrarNotaSeguro(event, ${n.id})">🗑</button>
+                        </div>
+                    </div>
+                    <h3>${n.titulo}</h3>
+                    <p>${n.texto}</p>
+                    <div class="nota-fecha-footer">${n.fecha || ''}</div>
+                </div>
+            `).join('');
+        }
+
+        function toggleMenu(id) {
+            document.querySelectorAll('.menu-desplegable').forEach(m => m.style.display = 'none');
+            const m = document.getElementById(`menu-${id}`);
+            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function borrarNotaSeguro(e, id) {
+            e.stopPropagation();
+            const lista = document.getElementById('lista-notas');
+            lista.style.pointerEvents = 'none';
+            setTimeout(() => {
+                if(confirm("¿Eliminar esta nota?")) {
+                    let notas = JSON.parse(localStorage.getItem('focus-notas')) || [];
+                    notas = notas.filter(n => n.id !== id);
+                    localStorage.setItem('focus-notas', JSON.stringify(notas));
+                    mostrarNotas();
+                }
+                lista.style.pointerEvents = 'auto';
+            }, 100);
+        }
+
+        function leerNota(id) {
+            const nota = (JSON.parse(localStorage.getItem('focus-notas')) || []).find(n => n.id === id);
+            if(nota) {
+                document.getElementById('leer-titulo').innerText = nota.titulo;
+                document.getElementById('leer-texto').innerText = nota.texto;
+                irA('pantalla-lectura');
+            }
+        }
+
+        function prepararEdicion(id) {
+            const nota = (JSON.parse(localStorage.getItem('focus-notas')) || []).find(n => n.id === id);
+            if(nota) {
+                document.getElementById('edit-id').value = nota.id;
+                document.getElementById('edit-titulo').value = nota.titulo;
+                document.getElementById('edit-texto').value = nota.texto;
+                irA('pantalla-editar');
+            }
+        }
+
+        function actualizarNota() {
+            const id = parseInt(document.getElementById('edit-id').value);
+            const titulo = document.getElementById('edit-titulo').value;
+            const texto = document.getElementById('edit-texto').value;
+            let notas = JSON.parse(localStorage.getItem('focus-notas')) || [];
+            notas = notas.map(n => n.id === id ? { ...n, titulo, texto } : n);
+            localStorage.setItem('focus-notas', JSON.stringify(notas));
+            window.history.back();
+            setTimeout(mostrarNotas, 200);
+        }
+
+        window.onclick = (e) => {
+            if (!e.target.matches('.btn-puntos')) {
+                document.querySelectorAll('.menu-desplegable').forEach(m => m.style.display = 'none');
+            }
+        };
+    </script>
+</body>
+</html>
