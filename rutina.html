@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - Rutinas Pro</title>
+    <style>
+        :root { --fondo: #0a0a0a; --tarjeta: #161616; --acento: #00f2ff; --glow: rgba(0, 242, 255, 0.3); }
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        body { background-color: var(--fondo); color: white; margin: 0; padding: 20px; padding-bottom: 120px; }
+
+        /* Cabecera */
+        .header-rutina { text-align: center; margin-bottom: 10px; position: relative; }
+        .btn-back { position: absolute; left: 0; top: 5px; background: #1e1e1e; border: 1px solid #333; color: var(--acento); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; }
+        .fecha-hoy h1 { margin: 0; font-size: 1.8rem; color: var(--acento); text-transform: capitalize; }
+        .fecha-hoy p { margin: 2px 0; color: #666; letter-spacing: 2px; font-size: 0.9rem; }
+        .streak-tag { display: inline-block; background: rgba(255, 149, 0, 0.1); color: #ff9500; border: 1px solid #ff9500; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; margin-top: 5px; }
+
+        /* BARRA DE PROGRESO (ENERGÍA) */
+        .contenedor-progreso { background: var(--tarjeta); border-radius: 20px; padding: 15px; margin: 20px 0; border: 1px solid #222; }
+        .progreso-meta { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.8rem; font-weight: bold; }
+        .barra-fondo { background: #000; height: 12px; border-radius: 10px; overflow: hidden; border: 1px solid #222; }
+        .barra-relleno { 
+            background: linear-gradient(90deg, #0088ff, var(--acento)); 
+            height: 100%; 
+            width: 0%; 
+            transition: width 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+            box-shadow: 0 0 10px var(--acento);
+        }
+
+        /* Selector de Semana */
+        .selector-semana { display: flex; justify-content: space-between; margin-bottom: 20px; background: var(--tarjeta); padding: 8px; border-radius: 12px; border: 1px solid #222; }
+        .dia-btn { background: none; border: none; color: #555; font-weight: bold; padding: 10px; border-radius: 8px; cursor: pointer; flex: 1; font-size: 0.8rem; }
+        .dia-btn.activo { background: var(--acento); color: black; box-shadow: 0 0 10px var(--acento); }
+
+        /* Tarjetas */
+        .rutina-card { background: var(--tarjeta); border-radius: 15px; padding: 15px; display: flex; align-items: center; gap: 15px; margin-bottom: 12px; border: 1px solid #222; }
+        .rutina-card.completada { border-color: var(--acento); opacity: 0.5; }
+        .info { flex-grow: 1; }
+        .info h3 { margin: 0; font-size: 1.1rem; }
+        .info p { margin: 4px 0 0 0; font-size: 0.85rem; color: #777; }
+
+        .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+        .btn-delete { background: none; border: none; color: #555; font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
+        .hora-tag { font-size: 0.7rem; color: var(--acento); font-weight: bold; background: rgba(0,242,255,0.1); padding: 3px 6px; border-radius: 6px; border: 1px solid rgba(0,242,255,0.2); }
+
+        .checkbox-custom { width: 28px; height: 28px; border: 2px solid var(--acento); border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+        .completada .checkbox-custom { background: var(--acento); }
+        .checkbox-custom::after { content: '✓'; color: black; display: none; font-weight: bold; }
+        .completada .checkbox-custom::after { display: block; }
+
+        .contenedor-agregar { position: fixed; bottom: 30px; left: 0; width: 100%; display: flex; justify-content: center; pointer-events: none; }
+        .btn-agregar { pointer-events: auto; background: var(--acento); color: black; border: none; padding: 15px 40px; border-radius: 30px; font-weight: bold; box-shadow: 0 0 20px rgba(0,242,255,0.4); cursor: pointer; }
+
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 100; display: none; padding: 20px; align-items: center; justify-content: center; }
+        .modal-content { background: var(--tarjeta); padding: 25px; border-radius: 20px; border: 1px solid var(--acento); width: 100%; max-width: 400px; }
+        input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; margin-bottom: 15px; outline: none; }
+        label { display: block; font-size: 0.8rem; color: var(--acento); margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="header-rutina">
+        <button class="btn-back" onclick="location.href='index.html'">←</button>
+        <div class="fecha-hoy">
+            <p id="label-fecha">DOMINGO 22</p>
+            <h1 id="label-dia">Febrero</h1>
+            <div class="streak-tag" id="streak-display">🔥 Racha Lun-Vie: 0 días</div>
+        </div>
+    </div>
+
+    <div class="contenedor-progreso">
+        <div class="progreso-meta">
+            <span>Energía del Día</span>
+            <span id="porcentaje-txt" style="color:var(--acento)">0%</span>
+        </div>
+        <div class="barra-fondo">
+            <div class="barra-relleno" id="barra-progreso"></div>
+        </div>
+    </div>
+
+    <div class="selector-semana">
+        <button class="dia-btn" onclick="cambiarDia(0)">D</button>
+        <button class="dia-btn" onclick="cambiarDia(1)">L</button>
+        <button class="dia-btn" onclick="cambiarDia(2)">M</button>
+        <button class="dia-btn" onclick="cambiarDia(3)">M</button>
+        <button class="dia-btn" onclick="cambiarDia(4)">J</button>
+        <button class="dia-btn" onclick="cambiarDia(5)">V</button>
+        <button class="dia-btn" onclick="cambiarDia(6)">S</button>
+    </div>
+
+    <main id="lista-rutinas"></main>
+
+    <div class="contenedor-agregar">
+        <button class="btn-agregar" onclick="abrirModal()">+ Agregar Actividad</button>
+    </div>
+
+    <div id="modal-rutina" class="modal">
+        <div class="modal-content">
+            <h2 style="margin-top:0; color:var(--acento)">Nueva Actividad</h2>
+            <label>Título</label>
+            <input type="text" id="in-nombre" placeholder="Ej. Lectura">
+            <label>Descripción</label>
+            <input type="text" id="in-desc" placeholder="Ej. 10 páginas">
+            <label>Hora</label>
+            <input type="time" id="in-hora">
+            <button onclick="guardarNueva()" style="width:100%; background:var(--acento); border:none; padding:15px; border-radius:10px; font-weight:bold; cursor:pointer;">GUARDAR</button>
+            <button onclick="cerrarModal()" style="width:100%; background:none; border:none; color:#555; margin-top:10px; cursor:pointer;">Cancelar</button>
+        </div>
+    </div>
+
+    <script>
+        let diaActivo = new Date().getDay();
+        let db = JSON.parse(localStorage.getItem('focus-rutinas-final')) || {0:[],1:[],2:[],3:[],4:[],5:[],6:[]};
+
+        function init() {
+            const hoy = new Date();
+            const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+            const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+            document.getElementById('label-fecha').innerText = `${dias[hoy.getDay()]} ${hoy.getDate()}`.toUpperCase();
+            document.getElementById('label-dia').innerText = meses[hoy.getMonth()];
+            
+            cambiarDia(diaActivo);
+        }
+
+        function cambiarDia(n) {
+            diaActivo = n;
+            document.querySelectorAll('.dia-btn').forEach((b, i) => b.classList.toggle('activo', i === n));
+            render();
+        }
+
+        function render() {
+            const cont = document.getElementById('lista-rutinas');
+            cont.innerHTML = '';
+            const items = db[diaActivo];
+
+            let completadas = 0;
+
+            items.forEach((item, i) => {
+                if(item.completada) completadas++;
+
+                let hDisp = "--:--";
+                if(item.hora) {
+                    let [h, m] = item.hora.split(':');
+                    let ampm = h >= 12 ? 'PM' : 'AM';
+                    h = h % 12 || 12;
+                    hDisp = `${h}:${m} ${ampm}`;
+                }
+
+                cont.innerHTML += `
+                    <div class="rutina-card ${item.completada ? 'completada' : ''}">
+                        <div class="info">
+                            <h3>${item.nombre}</h3>
+                            <p>${item.desc}</p>
+                            <div class="card-footer">
+                                <button class="btn-delete" onclick="eliminar(${i})">Eliminar</button>
+                                <span class="hora-tag">${hDisp}</span>
+                            </div>
+                        </div>
+                        <div class="checkbox-custom" onclick="toggle(${i})"></div>
+                    </div>
+                `;
+            });
+
+            // Actualizar Barra de Progreso
+            const porcentaje = items.length > 0 ? Math.round((completadas / items.length) * 100) : 0;
+            document.getElementById('barra-progreso').style.width = porcentaje + '%';
+            document.getElementById('porcentaje-txt').innerText = porcentaje + '%';
+        }
+
+        function toggle(i) {
+            db[diaActivo][i].completada = !db[diaActivo][i].completada;
+            save();
+        }
+
+        function eliminar(i) {
+            if(confirm("¿Eliminar?")) { db[diaActivo].splice(i, 1); save(); }
+        }
+
+        function guardarNueva() {
+            const n = document.getElementById('in-nombre').value;
+            const d = document.getElementById('in-desc').value;
+            const h = document.getElementById('in-hora').value;
+            if(!n) return;
+            db[diaActivo].push({ nombre: n, desc: d, hora: h, completada: false });
+            save(); cerrarModal();
+        }
+
+        function save() { 
+            localStorage.setItem('focus-rutinas-final', JSON.stringify(db)); 
+            render(); 
+        }
+
+        function abrirModal() { document.getElementById('modal-rutina').style.display = 'flex'; }
+        function cerrarModal() { document.getElementById('modal-rutina').style.display = 'none'; }
+
+        init();
+    </script>
+</body>
+</html>
