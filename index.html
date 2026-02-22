@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Estilos de Cabecera */
+        .header-inicio {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .btn-config-top {
+            background: #1e1e1e;
+            border: 1px solid #333;
+            color: var(--acento);
+            padding: 10px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Divisores */
+        .divisor {
+            width: 100%;
+            height: 1px;
+            background-color: #333;
+            margin: 15px 0;
+            border: none;
+        }
+
+        .divisor-neon {
+            width: 100%;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--acento), transparent);
+            margin: 20px 0;
+            opacity: 0.4;
+        }
+
+        /* Tarjeta de Tarea */
+        .card-clickeable {
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .card-clickeable:active {
+            transform: scale(0.98);
+        }
+
+        /* Contenedor de Botones - Lista Vertical */
+        .lista-botones {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        /* Botones del Menú */
+        .btn-menu {
+            width: 100%;
+            background: var(--tarjeta);
+            color: var(--texto);
+            border: 2px solid var(--acento);
+            padding: 20px;
+            border-radius: 15px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column; 
+            align-items: flex-start;
+            text-align: left;
+            transition: 0.3s;
+        }
+
+        .btn-menu:active {
+            background: var(--acento);
+            color: #000;
+        }
+
+        .btn-menu b {
+            font-size: 1.1rem;
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        .btn-menu span {
+            font-size: 0.8rem;
+            color: #888;
+            font-weight: normal;
+        }
+
+        /* Créditos al final */
+        .footer-creditos {
+            text-align: center; /* Centra el texto */
+            margin-top: 10px;
+            padding-bottom: 20px;
+        }
+
+        .footer-creditos h6 {
+            color: #555; /* Un gris más oscuro para que sea discreto */
+            font-weight: normal;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="pantalla-inicio" class="pantalla">
+        <header class="header-inicio">
+            <div>
+                <h1>Focus</h1>
+                <p id="fecha-actual" style="margin: 0; color: #888;"></p>
+            </div>
+            <button class="btn-config-top" onclick="location.href='config.html'">⚙️</button>
+        </header>
+
+        <main>
+            <section class="card card-clickeable" onclick="location.href='tareas.html'">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h2 style="margin: 0; font-size: 1.2rem;">Próxima Tarea</h2>
+                    <span style="color: var(--acento); font-size: 0.8rem;">Ver todas →</span>
+                </div>
+                <div id="tarea-pendiente" style="margin-top: 10px;">
+                    <p style="color: #bbb; margin: 0;">No hay tareas pendientes</p>
+                </div>
+            </section>
+
+            <div class="divisor-neon"></div>
+
+            <div class="lista-botones">
+                
+                <button class="btn-menu" onclick="location.href='mis_notas.html'">
+                    <b>📝 Mis Notas</b>
+                    <span>Administra tus notas por secciones con fecha y hora.</span>
+                </button>
+                
+                <div class="divisor-neon"></div>
+                
+                <button class="btn-menu" onclick="location.href='agenda.html'">
+                    <b>📅 Agenda</b>
+                    <span>Planifica tus eventos y compromisos importantes.</span>
+                </button>
+                
+                <div class="divisor-neon"></div>
+                
+                <button class="btn-menu" onclick="location.href='rutina.html'">
+                    <b>🏃 Rutina</b>
+                    <span>Gestiona tus hábitos y actividades diarias.</span>
+                </button>
+                
+                <div class="divisor-neon"></div>
+                
+                <button class="btn-menu" onclick="location.href='pomodor.html'">
+                    <b>⏱️ Pomodoros</b>
+                    <span>Mejora tu enfoque con ciclos de trabajo y descanso.</span>
+                </button>
+
+            </div>
+
+            <div class="divisor-neon"></div>
+
+            <footer class="footer-creditos">
+                <h6>- Desarrollado por Jonathan Del Angel -</h6>
+            </footer>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
