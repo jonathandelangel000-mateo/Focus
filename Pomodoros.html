@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - Pomodoro</title>
+    <style>
+        :root { 
+            --fondo: #0a0a0a; 
+            --tarjeta: #161616; 
+            --acento: #00f2ff; 
+            --acento-glow: rgba(0, 242, 255, 0.5);
+            --descanso: #00ff88;
+            --descanso-glow: rgba(0, 255, 136, 0.5);
+        }
+        
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        body { 
+            background-color: var(--fondo); color: white; margin: 0; padding: 20px; 
+            display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; 
+        }
+
+        /* Cabecera */
+        .header-pomodoro { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .btn-back { background: #1e1e1e; border: 1px solid #333; color: var(--acento); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; font-size: 1.2rem; transition: 0.3s; }
+        .titulo { font-size: 1.4rem; letter-spacing: 3px; color: var(--acento); text-shadow: 0 0 15px var(--acento-glow); margin: 0; font-weight: bold; }
+
+        /* Selector de Modos */
+        .modos-container { display: flex; background: var(--tarjeta); border-radius: 30px; padding: 5px; margin-bottom: 30px; border: 1px solid #222; overflow-x: auto; max-width: 100%; scrollbar-width: none; }
+        .modo-btn { background: none; border: none; color: #666; padding: 10px 20px; border-radius: 25px; font-weight: bold; cursor: pointer; transition: 0.3s; font-size: 0.85rem; white-space: nowrap; }
+        .modo-btn.activo { background: var(--acento); color: black; box-shadow: 0 0 20px var(--acento-glow); }
+        .modo-btn.activo.descanso { background: var(--descanso); box-shadow: 0 0 20px var(--descanso-glow); }
+
+        /* Anillo del Temporizador */
+        .timer-container { position: relative; width: 280px; height: 280px; display: flex; justify-content: center; align-items: center; margin-bottom: 40px; }
+        .progreso-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
+        .circulo-fondo { fill: none; stroke: #1a1a1a; stroke-width: 8; }
+        .circulo-barra { fill: none; stroke: var(--acento); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 785; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear, stroke 0.5s, filter 0.3s; filter: drop-shadow(0 0 12px var(--acento)); }
+
+        /* Texto del Tiempo */
+        .tiempo-display { display: flex; flex-direction: column; align-items: center; z-index: 10; }
+        #tiempo-texto { font-size: 4rem; font-weight: bold; margin: 0; letter-spacing: 2px; font-variant-numeric: tabular-nums; text-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        #fase-texto { font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; text-align: center; }
+
+        /* Controles Principales */
+        .controles { display: flex; gap: 20px; align-items: center; margin-bottom: 40px; }
+        .btn-control { background: #1e1e1e; border: 1px solid #333; color: white; width: 60px; height: 60px; border-radius: 50%; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
+        .btn-play { background: var(--acento); color: black; width: 80px; height: 80px; font-size: 2rem; border: none; box-shadow: 0 0 25px var(--acento-glow); }
+
+        /* Animaciones */
+        @keyframes latido { 0% { transform: scale(1); box-shadow: 0 0 25px var(--acento-glow); } 50% { transform: scale(1.03); box-shadow: 0 0 50px var(--acento-glow), 0 0 10px var(--acento) inset; } 100% { transform: scale(1); box-shadow: 0 0 25px var(--acento-glow); } }
+        .corriendo .btn-play { animation: latido 2s infinite; }
+        .corriendo .titulo { animation: latido 3s infinite; }
+        .corriendo .circulo-barra { filter: drop-shadow(0 0 18px var(--acento)); }
+
+        /* Modo Descanso */
+        body.modo-descanso .btn-back { color: var(--descanso); }
+        body.modo-descanso .circulo-barra { stroke: var(--descanso); filter: drop-shadow(0 0 12px var(--descanso)); }
+        body.modo-descanso .corriendo .circulo-barra { filter: drop-shadow(0 0 18px var(--descanso)); }
+        body.modo-descanso .btn-play { background: var(--descanso); box-shadow: 0 0 25px var(--descanso-glow); }
+        body.modo-descanso .titulo { color: var(--descanso); text-shadow: 0 0 15px var(--descanso-glow); }
+        
+        @keyframes latido-descanso { 0% { transform: scale(1); box-shadow: 0 0 25px var(--descanso-glow); } 50% { transform: scale(1.03); box-shadow: 0 0 50px var(--descanso-glow), 0 0 10px var(--descanso) inset; } 100% { transform: scale(1); box-shadow: 0 0 25px var(--descanso-glow); } }
+        body.modo-descanso .corriendo .btn-play { animation: latido-descanso 2s infinite; }
+
+        /* Botón Personalizar */
+        .btn-personalizar { background: none; border: 1px solid #444; color: white; padding: 10px 30px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; transition: 0.3s; margin-top: auto; }
+        .btn-personalizar:hover { background: #222; border-color: white; }
+
+        /* Modal Personalizar */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; display: none; padding: 20px; overflow-y: auto; flex-direction: column; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; width: 100%; }
+        .modal-header h2 { color: white; margin: 0; }
+        
+        /* Lista de Secuencias */
+        .secuencia-card { background: var(--tarjeta); border: 1px solid #333; padding: 15px; border-radius: 15px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .sec-info { cursor: pointer; flex-grow: 1; }
+        .sec-info h3 { margin: 0 0 5px 0; font-size: 1rem; color: var(--acento); }
+        .sec-info p { margin: 0; font-size: 0.8rem; color: #888; }
+        .btn-usar { background: #222; border: 1px solid var(--acento); color: var(--acento); padding: 8px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+
+        /* Formulario Nueva Secuencia */
+        .form-nueva { background: var(--tarjeta); padding: 20px; border-radius: 15px; border: 1px dashed #555; margin-top: 20px; }
+        .form-nueva input { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; margin-bottom: 15px; outline: none; }
+        .input-group { display: flex; gap: 10px; }
+        .btn-guardar-sec { width: 100%; background: white; color: black; border: none; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 10px;}
+        .btn-cancelar-edicion { width: 100%; background: none; border: 1px solid #444; color: #888; padding: 10px; border-radius: 10px; cursor: pointer; display: none; }
+    </style>
+</head>
+<body>
+
+    <header class="header-pomodoro">
+        <a href="index.html" class="btn-back">←</a>
+        <h1 class="titulo">FOCUS</h1>
+        <div style="width: 45px;"></div>
+    </header>
+
+    <div class="modos-container" id="selector-modos">
+        </div>
+
+    <div class="timer-container" id="contenedor-reloj">
+        <svg class="progreso-svg" viewBox="0 0 280 280">
+            <circle class="circulo-fondo" cx="140" cy="140" r="125"></circle>
+            <circle class="circulo-barra" id="anillo" cx="140" cy="140" r="125"></circle>
+        </svg>
+        <div class="tiempo-display">
+            <h2 id="tiempo-texto">25:00</h2>
+            <span id="fase-texto">Tiempo de brillar</span>
+        </div>
+    </div>
+
+    <div class="controles">
+        <button class="btn-control" onclick="reiniciar()">↺</button>
+        <button class="btn-control btn-play" id="btn-accion" onclick="toggleTimer()">▶</button>
+        <button class="btn-control" onclick="saltar()">⏭</button>
+    </div>
+
+    <button class="btn-personalizar" onclick="abrirModal()">Personalizar Tiempos</button>
+
+    <div id="modal-personalizar" class="modal">
+        <div class="modal-header">
+            <button class="btn-back" onclick="cerrarModal()">←</button>
+            <h2>Mis Secuencias</h2>
+            <div style="width:45px"></div>
+        </div>
+
+        <div id="lista-secuencias"></div>
+
+        <div class="form-nueva">
+            <h3 id="form-titulo" style="margin-top:0; color:white; font-size:1rem;">Crear Nueva Secuencia</h3>
+            <input type="hidden" id="sec-index" value="-1">
+            <input type="text" id="sec-nombre" placeholder="Nombre (Ej. Sesión Larga)">
+            <div class="input-group">
+                <input type="number" id="sec-focus" placeholder="Min. Enfoque" min="1">
+                <input type="number" id="sec-desc" placeholder="Min. Descanso" min="1">
+            </div>
+            <button class="btn-guardar-sec" onclick="guardarSecuencia()">Guardar Secuencia</button>
+            <button class="btn-cancelar-edicion" id="btn-cancelar-edicion" onclick="limpiarFormulario()">Cancelar Edición</button>
+        </div>
+    </div>
+
+    <script>
+        // LÓGICA DE SECUENCIAS
+        let secuencias = JSON.parse(localStorage.getItem('focus-secuencias')) || [
+            { id: 'default-f', nombre: 'Enfoque', focus: 25, descanso: 0, tipo: 'focus' },
+            { id: 'default-dc', nombre: 'Corto', focus: 0, descanso: 5, tipo: 'descanso' },
+            { id: 'default-dl', nombre: 'Largo', focus: 0, descanso: 15, tipo: 'descanso' }
+        ];
+
+        let secuenciaActual = null; 
+        let faseSecuencia = 'focus'; 
+
+        // LÓGICA DEL TEMPORIZADOR
+        let tiempoTotal = 25 * 60; 
+        let tiempoRestante = tiempoTotal;
+        let timerId = null;
+        let corriendo = false;
+        const perimetro = 785; 
+
+        const txtTiempo = document.getElementById('tiempo-texto');
+        const txtFase = document.getElementById('fase-texto');
+        const anillo = document.getElementById('anillo');
+        const btnAccion = document.getElementById('btn-accion');
+        const body = document.body;
+        const contReloj = document.getElementById('contenedor-reloj');
+
+        window.onpopstate = function() { cerrarModal(); };
+        function pushState() { history.pushState({ modal: true }, ""); }
+
+        function renderBotones() {
+            const cont = document.getElementById('selector-modos');
+            cont.innerHTML = '';
+            
+            // Si hay secuencia personalizada activa, mostramos solo esa
+            if (secuenciaActual) {
+                const isDescanso = faseSecuencia === 'descanso';
+                cont.innerHTML = `<button class="modo-btn activo ${isDescanso ? 'descanso' : ''}" style="border: 1px solid var(--acento)">${secuenciaActual.nombre} (${isDescanso ? 'Descanso' : 'Enfoque'})</button>`;
+            } else {
+                // Si no, mostramos SIEMPRE los 3 botones por defecto
+                secuencias.slice(0, 3).forEach((s) => {
+                    const activo = (tiempoTotal === (s.focus || s.descanso) * 60) ? 'activo' : '';
+                    const descansoClass = s.tipo === 'descanso' ? 'descanso' : '';
+                    cont.innerHTML += `<button class="modo-btn ${activo} ${descansoClass}" onclick="setModoManual(${s.focus || s.descanso}, '${s.tipo}', this)">${s.nombre}</button>`;
+                });
+            }
+        }
+
+        function setModoManual(minutos, tipo, btnElement) {
+            secuenciaActual = null; // Rompemos secuencia personalizada
+            aplicarTiempos(minutos, tipo);
+            renderBotones(); 
+        }
+
+        function aplicarTiempos(minutos, tipo, tituloPersonalizado) {
+            pausar();
+            tiempoTotal = minutos * 60;
+            tiempoRestante = tiempoTotal;
+            
+            if (tipo === 'descanso') {
+                body.classList.add('modo-descanso');
+                txtFase.innerText = tituloPersonalizado || "A relajarse";
+            } else {
+                body.classList.remove('modo-descanso');
+                txtFase.innerText = tituloPersonalizado || "Tiempo de brillar";
+            }
+            actualizarDisplay();
+        }
+
+        function actualizarDisplay() {
+            let m = Math.floor(tiempoRestante / 60);
+            let s = tiempoRestante % 60;
+            txtTiempo.innerText = `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            let offset = perimetro - (tiempoRestante / tiempoTotal) * perimetro;
+            anillo.style.strokeDashoffset = offset;
+        }
+
+        function toggleTimer() {
+            if (corriendo) { pausar(); } else { iniciar(); }
+        }
+
+        function iniciar() {
+            if (tiempoRestante === 0) return;
+            corriendo = true;
+            btnAccion.innerHTML = '❚❚';
+            contReloj.classList.add('corriendo');
+            body.classList.add('corriendo'); 
+            
+            timerId = setInterval(() => {
+                tiempoRestante--;
+                actualizarDisplay();
+                if (tiempoRestante <= 0) {
+                    finalizarCiclo();
+                }
+            }, 1000);
+        }
+
+        function pausar() {
+            corriendo = false;
+            clearInterval(timerId);
+            btnAccion.innerHTML = '▶';
+            contReloj.classList.remove('corriendo');
+            body.classList.remove('corriendo');
+        }
+
+        function reiniciar() {
+            pausar();
+            tiempoRestante = tiempoTotal;
+            actualizarDisplay();
+            
+            // LA MAGIA: Restaurar el texto original dependiendo del modo activo
+            if (secuenciaActual) {
+                const fase = faseSecuencia === 'descanso' ? 'Descanso' : 'Enfoque';
+                txtFase.innerText = `${secuenciaActual.nombre} - ${fase}`;
+            } else {
+                txtFase.innerText = body.classList.contains('modo-descanso') ? "A relajarse" : "Tiempo de brillar";
+            }
+        }
+
+        function saltar() {
+            finalizarCiclo();
+        }
+
+        function finalizarCiclo() {
+            pausar();
+            tiempoRestante = 0;
+            actualizarDisplay();
+
+            if (secuenciaActual) {
+                if (faseSecuencia === 'focus') {
+                    faseSecuencia = 'descanso';
+                    aplicarTiempos(secuenciaActual.descanso, 'descanso', `${secuenciaActual.nombre} - Descanso`);
+                } else {
+                    faseSecuencia = 'focus';
+                    aplicarTiempos(secuenciaActual.focus, 'focus', `${secuenciaActual.nombre} - Enfoque`);
+                    txtFase.innerText = "¡modo focus!";
+                }
+                renderBotones();
+            } else {
+                txtFase.innerText = "¡Completado!";
+            }
+        }
+
+        // --- GESTIÓN DEL MODAL Y PERSONALIZACIÓN ---
+
+        function abrirModal() {
+            pushState();
+            renderListaSecuencias();
+            limpiarFormulario(); 
+            document.getElementById('modal-personalizar').style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modal-personalizar').style.display = 'none';
+        }
+
+        function renderListaSecuencias() {
+            const list = document.getElementById('lista-secuencias');
+            list.innerHTML = '';
+            
+            const personalizadas = secuencias.slice(3);
+            
+            if(personalizadas.length === 0) {
+                list.innerHTML = '<p style="color:#666; text-align:center;">No tienes secuencias personalizadas.</p>';
+            } else {
+                personalizadas.forEach((s, i) => {
+                    const realIndex = i + 3;
+                    list.innerHTML += `
+                        <div class="secuencia-card">
+                            <div class="sec-info" onclick="editarSecuencia(${realIndex})" title="Toca para editar">
+                                <h3>${s.nombre}</h3>
+                                <p>${s.focus}m Enfoque / ${s.descanso}m Descanso</p>
+                            </div>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <button class="btn-usar" onclick="iniciarSecuencia(${realIndex})">Usar</button>
+                                <button onclick="borrarSecuencia(${realIndex})" style="background:none; border:none; color:#ff4444; font-size: 1.2rem; cursor:pointer;" title="Borrar">🗑</button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function editarSecuencia(idx) {
+            const s = secuencias[idx];
+            document.getElementById('sec-index').value = idx;
+            document.getElementById('sec-nombre').value = s.nombre;
+            document.getElementById('sec-focus').value = s.focus;
+            document.getElementById('sec-desc').value = s.descanso;
+            
+            document.getElementById('form-titulo').innerText = "Editar Secuencia";
+            document.querySelector('.btn-guardar-sec').innerText = "Actualizar Secuencia";
+            document.getElementById('btn-cancelar-edicion').style.display = 'block';
+            
+            document.querySelector('.form-nueva').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('sec-index').value = "-1";
+            document.getElementById('sec-nombre').value = '';
+            document.getElementById('sec-focus').value = '';
+            document.getElementById('sec-desc').value = '';
+            
+            document.getElementById('form-titulo').innerText = "Crear Nueva Secuencia";
+            document.querySelector('.btn-guardar-sec').innerText = "Guardar Secuencia";
+            document.getElementById('btn-cancelar-edicion').style.display = 'none';
+        }
+
+        function guardarSecuencia() {
+            const idx = parseInt(document.getElementById('sec-index').value);
+            const n = document.getElementById('sec-nombre').value;
+            const f = parseInt(document.getElementById('sec-focus').value);
+            const d = parseInt(document.getElementById('sec-desc').value);
+
+            if(!n || !f || !d) return alert("Completa todos los campos");
+
+            if (idx === -1) {
+                secuencias.push({ id: Date.now(), nombre: n, focus: f, descanso: d });
+            } else {
+                secuencias[idx] = { id: secuencias[idx].id, nombre: n, focus: f, descanso: d };
+            }
+            
+            localStorage.setItem('focus-secuencias', JSON.stringify(secuencias));
+            limpiarFormulario();
+            renderListaSecuencias();
+        }
+
+        function borrarSecuencia(idx) {
+            if(confirm("¿Estás seguro de borrar esta secuencia?")) {
+                if(parseInt(document.getElementById('sec-index').value) === idx) {
+                    limpiarFormulario();
+                }
+                
+                secuencias.splice(idx, 1);
+                localStorage.setItem('focus-secuencias', JSON.stringify(secuencias));
+                renderListaSecuencias();
+                
+                if (secuenciaActual && secuencias.indexOf(secuenciaActual) === -1) {
+                    setModoManual(25, 'focus', null);
+                }
+            }
+        }
+
+        function iniciarSecuencia(idx) {
+            secuenciaActual = secuencias[idx];
+            faseSecuencia = 'focus';
+            cerrarModal();
+            aplicarTiempos(secuenciaActual.focus, 'focus', `${secuenciaActual.nombre} - Enfoque`);
+            renderBotones();
+        }
+
+        // INIT
+        renderBotones();
+        actualizarDisplay();
+    </script>
+</body>
+</html>
