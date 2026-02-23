@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - Mis Tareas</title>
+    <style>
+        :root { --fondo: #0a0a0a; --tarjeta: #161616; --acento: #00f2ff; --urgente: #ff2d55; --especial: #af52de; }
+        * { box-sizing: border-box; font-family: sans-serif; }
+        body { background-color: var(--fondo); color: white; margin: 0; padding: 20px; padding-bottom: 120px; overflow-x: hidden; }
+
+        /* Header Principal */
+        .header-tareas { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .btn-back, .btn-ver-realizadas { background: #1e1e1e; border: 1px solid #333; color: var(--acento); width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; cursor: pointer; }
+        .titulo-seccion { text-align: center; flex-grow: 1; }
+        .titulo-seccion h1 { margin: 0; font-size: 1.4rem; letter-spacing: 2px; color: var(--acento); text-shadow: 0 0 10px rgba(0,242,255,0.6); }
+
+        /* Filtros */
+        .filtros { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 15px; margin-bottom: 10px; scrollbar-width: none; }
+        .f-btn { background: var(--tarjeta); border: 1px solid #333; color: #666; padding: 8px 15px; border-radius: 20px; white-space: nowrap; cursor: pointer; font-size: 0.8rem; }
+        .f-btn.activo { border-color: var(--acento); color: var(--acento); background: rgba(0,242,255,0.1); }
+
+        /* Cards */
+        .t-card { background: var(--tarjeta); border-radius: 15px; padding: 15px; margin-bottom: 12px; border-left: 4px solid #333; display: flex; justify-content: space-between; align-items: flex-start; }
+        .t-card.urgente { border-left-color: var(--urgente); }
+        .t-card.especial { border-left-color: var(--especial); }
+        .t-card.festejo { border-left-color: #ffcc00; }
+
+        .info { flex-grow: 1; cursor: pointer; padding-right: 10px; }
+        .info h3 { margin: 0; font-size: 1rem; color: var(--acento); text-shadow: 0 0 8px rgba(0,242,255,0.4); }
+        .info p { margin: 5px 0; font-size: 0.8rem; color: #777; line-height: 1.3; }
+        .tag-fecha { font-size: 0.65rem; background: #222; padding: 3px 7px; border-radius: 4px; display: inline-block; margin-top: 5px; color: var(--acento); }
+
+        .check { width: 28px; height: 28px; border: 2px solid #444; border-radius: 50%; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+        .check.done { background: var(--acento); border-color: var(--acento); box-shadow: 0 0 10px rgba(0,242,255,0.5); }
+        .check.done::after { content: '✓'; color: black; font-weight: bold; }
+
+        /* Modales y Pantallas */
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 1000; display: none; padding: 20px; overflow-y: auto; }
+        .modal-content { background: var(--tarjeta); width: 100%; max-width: 450px; padding: 25px; border-radius: 20px; border: 1px solid var(--acento); margin: auto; }
+        input, select, textarea { width: 100%; background: #000; border: 1px solid #333; color: white; padding: 12px; border-radius: 10px; margin-bottom: 15px; outline: none; }
+
+        /* Estilo específico para pantalla de Realizadas */
+        .btn-atras-realizadas { position: fixed; bottom: 30px; left: 20px; z-index: 1001; }
+
+        /* FAB */
+        .btn-add { position: fixed; bottom: 30px; right: 20px; background: var(--acento); color: #000; border: none; width: 60px; height: 60px; border-radius: 50%; font-size: 2rem; font-weight: bold; box-shadow: 0 10px 20px rgba(0,242,255,0.3); cursor: pointer; z-index: 900; }
+    </style>
+</head>
+<body>
+
+    <header class="header-tareas">
+        <a href="index.html" class="btn-back">←</a>
+        <div class="titulo-seccion">
+            <h1>TAREAS</h1>
+        </div>
+        <button class="btn-ver-realizadas" onclick="abrirPantallaRealizadas()">✓</button>
+    </header>
+
+    <div class="filtros">
+        <button class="f-btn activo" onclick="filtrar('todas', this)">Todas</button>
+        <button class="f-btn" onclick="filtrar('urgente', this)">Urgentes 🚨</button>
+        <button class="f-btn" onclick="filtrar('festejo', this)">Festejos 🥳</button>
+        <button class="f-btn" onclick="filtrar('especial', this)">Especiales ⭐</button>
+    </div>
+
+    <main id="lista-pendientes"></main>
+
+    <button class="btn-add" onclick="abrirModal()">+</button>
+
+    <div id="modal-t" class="modal">
+        <div class="modal-content">
+            <h2 id="modal-titulo" style="color:var(--acento); margin-top:0; text-shadow: 0 0 10px var(--acento);">Agendar</h2>
+            <input type="hidden" id="edit-index">
+            <input type="text" id="in-titulo" placeholder="Título">
+            <textarea id="in-desc" placeholder="Descripción..."></textarea>
+            <input type="date" id="in-fecha">
+            <select id="in-cat">
+                <option value="normal">Normal</option>
+                <option value="urgente">Urgente 🚨</option>
+                <option value="festejo">Festejo 🥳</option>
+                <option value="especial">Especial ⭐</option>
+            </select>
+            <button onclick="guardar()" style="width:100%; background:var(--acento); border:none; padding:15px; border-radius:10px; font-weight:bold; color:black;">GUARDAR</button>
+            <button onclick="cerrarModal()" style="width:100%; background:none; border:none; color:#444; margin-top:10px;">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="pantalla-realizadas" class="modal">
+        <div id="lista-realizadas" style="padding-bottom: 80px;"></div>
+        
+        <button class="btn-back btn-atras-realizadas" onclick="cerrarRealizadas()">←</button>
+    </div>
+
+    <script>
+        const CLAVE = 'focus-tareas-v2';
+        let tareas = JSON.parse(localStorage.getItem(CLAVE)) || [];
+        let filtroActual = 'todas';
+
+        window.onpopstate = function() {
+            cerrarModal();
+            cerrarRealizadas();
+        };
+
+        function pushState() { history.pushState({ modal: true }, ""); }
+
+        function render() {
+            const pend = document.getElementById('lista-pendientes');
+            const real = document.getElementById('lista-realizadas');
+            pend.innerHTML = '';
+            real.innerHTML = '';
+
+            let lista = tareas.map((t, i) => ({...t, originalIndex: i}))
+                              .filter(t => filtroActual === 'todas' || t.categoria === filtroActual);
+            
+            lista.sort((a,b) => {
+                if(a.categoria === 'urgente' && b.categoria !== 'urgente') return -1;
+                if(a.categoria !== 'urgente' && b.categoria === 'urgente') return 1;
+                return new Date(a.fecha) - new Date(b.fecha);
+            });
+
+            const activas = lista.filter(t => !t.completada);
+            const hechas = lista.filter(t => t.completada);
+
+            activas.forEach(t => pend.innerHTML += crearHTML(t));
+            hechas.forEach(t => real.innerHTML += crearHTML(t));
+        }
+
+        function crearHTML(t) {
+            const estiloTitulo = t.completada 
+                ? 'text-decoration:line-through; color:var(--acento); opacity: 0.6;' 
+                : 'color:var(--acento);';
+
+            return `
+                <div class="t-card ${t.categoria}">
+                    <div class="info" onclick="editar(${t.originalIndex})">
+                        <h3 style="${estiloTitulo}">${t.titulo}</h3>
+                        <p>${t.descripcion || ''}</p>
+                        <span class="tag-fecha">${t.fecha}</span>
+                        ${t.completada ? `<span style="color:#ff4444; font-size:0.7rem; margin-left:10px;" onclick="event.stopPropagation(); eliminar(${t.originalIndex})">Borrar</span>` : ''}
+                    </div>
+                    <div class="check ${t.completada ? 'done' : ''}" onclick="toggle(${t.originalIndex})"></div>
+                </div>
+            `;
+        }
+
+        function abrirModal() {
+            pushState();
+            document.getElementById('modal-titulo').innerText = "Agendar";
+            document.getElementById('edit-index').value = "-1";
+            document.getElementById('in-titulo').value = "";
+            document.getElementById('in-desc').value = "";
+            document.getElementById('modal-t').style.display = 'flex';
+        }
+
+        function editar(idx) {
+            pushState();
+            const t = tareas[idx];
+            document.getElementById('modal-titulo').innerText = "Editar Tarea";
+            document.getElementById('edit-index').value = idx;
+            document.getElementById('in-titulo').value = t.titulo;
+            document.getElementById('in-desc').value = t.descripcion;
+            document.getElementById('in-fecha').value = t.fecha;
+            document.getElementById('in-cat').value = t.categoria;
+            document.getElementById('modal-t').style.display = 'flex';
+        }
+
+        function guardar() {
+            const idx = parseInt(document.getElementById('edit-index').value);
+            const t = {
+                titulo: document.getElementById('in-titulo').value,
+                descripcion: document.getElementById('in-desc').value,
+                fecha: document.getElementById('in-fecha').value,
+                categoria: document.getElementById('in-cat').value,
+                completada: idx !== -1 ? tareas[idx].completada : false
+            };
+            if(!t.titulo || !t.fecha) return;
+            if(idx === -1) tareas.push(t); else tareas[idx] = t;
+            localStorage.setItem(CLAVE, JSON.stringify(tareas));
+            cerrarModal();
+            render();
+        }
+
+        function toggle(idx) {
+            tareas[idx].completada = !tareas[idx].completada;
+            localStorage.setItem(CLAVE, JSON.stringify(tareas));
+            render();
+        }
+
+        function eliminar(idx) {
+            if(confirm("¿Eliminar?")) {
+                tareas.splice(idx, 1);
+                localStorage.setItem(CLAVE, JSON.stringify(tareas));
+                render();
+            }
+        }
+
+        function filtrar(c, b) {
+            filtroActual = c;
+            document.querySelectorAll('.f-btn').forEach(btn => btn.classList.remove('activo'));
+            b.classList.add('activo');
+            render();
+        }
+
+        function cerrarModal() { document.getElementById('modal-t').style.display = 'none'; }
+        function abrirPantallaRealizadas() { pushState(); document.getElementById('pantalla-realizadas').style.display = 'flex'; }
+        function cerrarRealizadas() { document.getElementById('pantalla-realizadas').style.display = 'none'; }
+
+        render();
+    </script>
+</body>
+</html>
