@@ -46,16 +46,6 @@
             opacity: 0.4;
         }
 
-        /* Tarjeta de Tarea */
-        .card-clickeable {
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-
-        .card-clickeable:active {
-            transform: scale(0.98);
-        }
-
         /* Contenedor de Botones - Lista Vertical */
         .lista-botones {
             display: flex;
@@ -98,13 +88,13 @@
 
         /* Créditos al final */
         .footer-creditos {
-            text-align: center; /* Centra el texto */
+            text-align: center;
             margin-top: 10px;
             padding-bottom: 20px;
         }
 
         .footer-creditos h6 {
-            color: #555; /* Un gris más oscuro para que sea discreto */
+            color: #555;
             font-weight: normal;
             letter-spacing: 1px;
             margin: 0;
@@ -123,19 +113,14 @@
         </header>
 
         <main>
-            <section class="card card-clickeable" onclick="location.href='tareas.html'">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <h2 style="margin: 0; font-size: 1.2rem;">Próxima Tarea</h2>
-                    <span style="color: var(--acento); font-size: 0.8rem;">Ver todas →</span>
-                </div>
-                <div id="tarea-pendiente" style="margin-top: 10px;">
-                    <p style="color: #bbb; margin: 0;">No hay tareas pendientes</p>
-                </div>
-            </section>
-
-            <div class="divisor-neon"></div>
-
             <div class="lista-botones">
+                
+                <button class="btn-menu" onclick="location.href='tareas.html'">
+                    <b>✅ Tareas y Recordatorios</b>
+                    <span>Organiza tus pendientes, prioridades y eventos especiales.</span>
+                </button>
+
+                <div class="divisor-neon"></div>
                 
                 <button class="btn-menu" onclick="location.href='mis_notas.html'">
                     <b>📝 Mis Notas</b>
