@@ -6,12 +6,51 @@
     <title>Focus - Dashboard</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Estilos de Cabecera */
+        /* BARRA SUPERIOR FIJA */
+        #perfil-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background-color: #0a0a0a;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 15px;
+            border-bottom: 1px solid #1a1a1a;
+        }
+
+        #user-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: 2px solid #00f2ff;
+            object-fit: cover;
+            background: #222;
+            box-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+        }
+
+        .app-name-header {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00f2ff;
+            text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+            margin: 0;
+            letter-spacing: 1px;
+        }
+
+        /* AJUSTE PARA EL CONTENIDO */
+        .pantalla {
+            padding-top: 85px;
+        }
+
         .header-inicio {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 20px;
+            align-items: center;
+            margin-bottom: 25px;
         }
 
         .btn-config-top {
@@ -27,17 +66,10 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: 0.3s;
         }
 
         /* Divisores */
-        .divisor {
-            width: 100%;
-            height: 1px;
-            background-color: #333;
-            margin: 15px 0;
-            border: none;
-        }
-
         .divisor-neon {
             width: 100%;
             height: 1px;
@@ -46,14 +78,14 @@
             opacity: 0.4;
         }
 
-        /* Contenedor de Botones - Lista Vertical */
+        /* Contenedor de Botones */
         .lista-botones {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 10px;
         }
 
-        /* Botones del Menú */
+        /* Botones del Menú Estilo Neón */
         .btn-menu {
             width: 100%;
             background: var(--tarjeta);
@@ -86,15 +118,14 @@
             font-weight: normal;
         }
 
-        /* Créditos al final */
         .footer-creditos {
             text-align: center;
-            margin-top: 10px;
-            padding-bottom: 20px;
+            margin-top: 30px;
+            padding-bottom: 30px;
         }
 
         .footer-creditos h6 {
-            color: #555;
+            color: #444;
             font-weight: normal;
             letter-spacing: 1px;
             margin: 0;
@@ -103,11 +134,25 @@
 </head>
 <body>
 
+    <div id="perfil-header">
+        <img id="user-avatar" src="" alt="Perfil">
+        <h1 class="app-name-header">Focus</h1>
+    </div>
+
+    <script>
+        if (sessionStorage.getItem('sesion_activa') !== 'true') {
+            window.location.href = 'login.html';
+        }
+        const userData = JSON.parse(localStorage.getItem('focus_user'));
+        if (userData && userData.photo) {
+            document.getElementById('user-avatar').src = userData.photo;
+        }
+    </script>
+
     <div id="pantalla-inicio" class="pantalla">
         <header class="header-inicio">
             <div>
-                <h1>Focus</h1>
-                <p id="fecha-actual" style="margin: 0; color: #888;"></p>
+                <p id="fecha-actual" style="margin: 0; color: #888; font-size: 1.1rem; text-transform: capitalize;"></p>
             </div>
             <button class="btn-config-top" onclick="location.href='config.html'">⚙️</button>
         </header>
@@ -117,11 +162,11 @@
                 
                 <button class="btn-menu" onclick="location.href='tareas.html'">
                     <b>✅ Tareas y Recordatorios</b>
-                    <span>Organiza tus pendientes, prioridades y eventos especiales.</span>
+                    <span>Gestiona tus pendientes y prioridades diarias.</span>
                 </button>
 
                 <div class="divisor-neon"></div>
-                
+
                 <button class="btn-menu" onclick="location.href='mis_notas.html'">
                     <b>📝 Mis Notas</b>
                     <span>Administra tus notas por secciones con fecha y hora.</span>
@@ -146,6 +191,34 @@
                 <button class="btn-menu" onclick="location.href='pomodoros.html'">
                     <b>⏱️ Pomodoros</b>
                     <span>Mejora tu enfoque con ciclos de trabajo y descanso.</span>
+                </button>
+
+                <div class="divisor-neon"></div>
+
+                <button class="btn-menu" onclick="location.href='pareja.html'" style="border-color: #ff4d6d;">
+                    <b>❤️ En Pareja</b>
+                    <span>Espacio dedicado a fortalecer nuestra relación.</span>
+                </button>
+
+                <div class="divisor-neon"></div>
+
+                <button class="btn-menu" onclick="location.href='pareja2.html'" style="border-color: #ff4d6d;">
+                    <b>Semaforo🚦❤️</b>
+                    <span>Planea momentos especiales y salidas juntos.</span>
+                </button>
+
+                <div class="divisor-neon"></div>
+
+                <button class="btn-menu" onclick="location.href='compromisos.html'">
+                    <b>📜 Compromisos</b>
+                    <span>Nuestros acuerdos y pilares de confianza.</span>
+                </button>
+
+                <div class="divisor-neon"></div>
+
+                <button class="btn-menu" onclick="location.href='gastos.html'">
+                    <b>💰 Mis Gastos</b>
+                    <span>Control financiero y administración de recursos.</span>
                 </button>
 
             </div>
