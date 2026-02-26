@@ -147,6 +147,9 @@
         if (userData && userData.photo) {
             document.getElementById('user-avatar').src = userData.photo;
         }
+        const colorTema = localStorage.getItem('focus_color_tema') || '#00f2ff';
+document.documentElement.style.setProperty('--acento', colorTema);
+
     </script>
 
     <div id="pantalla-inicio" class="pantalla">
@@ -203,7 +206,7 @@
                 <div class="divisor-neon"></div>
 
                 <button class="btn-menu" onclick="location.href='pareja2.html'" style="border-color: #ff4d6d;">
-                    <b>Semaforo🚦❤️</b>
+                    <b>🥂 Citas</b>
                     <span>Planea momentos especiales y salidas juntos.</span>
                 </button>
 
