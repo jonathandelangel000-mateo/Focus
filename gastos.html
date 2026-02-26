@@ -3,233 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Focus - Mis Gastos</title>
+    <title>Focus - Gestión Financiera</title>
     <link rel="stylesheet" href="style.css">
     <style>
         :root {
-            --acento-gastos: #00ff88; /* Verde neón para dinero */
+            --acento-gastos: #00ff88;
+            --acento-apartado: #00f2ff;
             --tarjeta: #1e1e1e;
+            --fondo: #0a0a0a;
         }
 
-        body { background-color: #0a0a0a; color: white; margin: 0; padding: 20px; font-family: sans-serif; }
+        body { background-color: var(--fondo); color: white; margin: 0; padding: 20px; font-family: sans-serif; padding-top: 80px; }
 
-        /* Resumen de Saldo */
-        .resumen-card {
-            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
-            border: 2px solid var(--acento-gastos);
-            border-radius: 20px;
-            padding: 20px;
-            text-align: center;
-            margin-bottom: 20px;
-            box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
-        }
+        #perfil-header { position: fixed; top: 0; left: 0; width: 100%; height: 70px; background: #0a0a0a; z-index: 1000; display: flex; align-items: center; padding: 0 20px; gap: 15px; border-bottom: 1px solid #1a1a1a; }
+        #user-avatar { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--acento-gastos); object-fit: cover; }
 
-        .saldo-monto { font-size: 2.5rem; font-weight: bold; color: var(--acento-gastos); display: block; }
+        .resumen-total { background: var(--tarjeta); border-radius: 20px; padding: 20px; text-align: center; border: 1px solid #333; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .monto-grande { font-size: 2.5rem; font-weight: bold; color: var(--acento-gastos); text-shadow: 0 0 10px rgba(0,255,136,0.3); }
 
-        /* Apartados / Ahorro */
-        .seccion-apartado {
-            background: #161616;
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 20px;
-            border: 1px dashed var(--acento-gastos);
-        }
+        /* Apartados Colapsables */
+        .btn-toggle { width: 100%; background: #161616; color: var(--acento-apartado); border: 1px solid var(--acento-apartado); padding: 12px; border-radius: 12px; font-weight: bold; margin-bottom: 10px; cursor: pointer; }
+        #seccion-apartados { display: none; background: #111; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #222; }
+        .grid-apartados { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .card-apartado { background: var(--tarjeta); padding: 12px; border-radius: 10px; border-left: 3px solid var(--acento-apartado); position: relative; }
+        .card-apartado h4 { margin: 0; font-size: 0.8rem; color: #888; }
+        .card-apartado b { font-size: 1.1rem; color: white; }
 
-        .progreso-barra {
-            width: 100%;
-            height: 10px;
-            background: #333;
-            border-radius: 5px;
-            margin: 10px 0;
-            overflow: hidden;
-        }
+        /* Formulario Maestro */
+        .caja-movimiento { background: #161616; padding: 20px; border-radius: 20px; border: 1px solid #333; margin-top: 10px; }
+        .campo { margin-bottom: 15px; }
+        .campo label { display: block; font-size: 0.8rem; color: #888; margin-bottom: 5px; margin-left: 5px; }
+        input, select { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; font-size: 1rem; box-sizing: border-box; }
+        
+        .btn-confirmar { width: 100%; background: var(--acento-gastos); color: black; border: none; padding: 15px; border-radius: 12px; font-weight: bold; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,255,136,0.2); }
 
-        .progreso-llenado {
-            height: 100%;
-            background: var(--acento-gastos);
-            box-shadow: 0 0 10px var(--acento-gastos);
-            transition: width 0.5s;
-        }
+        /* Modal de Historial */
+        #modal-historial { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--fondo); z-index: 2000; padding: 20px; box-sizing: border-box; overflow-y: auto; }
+        .item-historial { background: #161616; padding: 15px; border-radius: 12px; margin-bottom: 10px; border-bottom: 2px solid #222; }
 
-        /* Formulario */
-        .form-gastos {
-            background: #1a1a1a;
-            padding: 15px;
-            border-radius: 15px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        input, select {
-            background: #252525;
-            border: 1px solid #333;
-            color: white;
-            padding: 12px;
-            border-radius: 8px;
-        }
-
-        .btn-accion {
-            background: var(--acento-gastos);
-            color: black;
-            border: none;
-            padding: 12px;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        /* Lista de Movimientos */
-        .gasto-item {
-            background: var(--tarjeta);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 4px solid #444;
-        }
-
-        .gasto-item.ingreso { border-left-color: var(--acento-gastos); }
-        .gasto-item.egreso { border-left-color: #ff4d6d; }
-
-        .btn-regresar { color: var(--acento-gastos); text-decoration: none; display: inline-block; margin-bottom: 20px; }
+        .btn-flotante-historial { position: fixed; bottom: 20px; right: 20px; background: #333; color: white; border: none; padding: 15px 25px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.5); z-index: 1500; }
+        .btn-cerrar { background: #ff4d6d; color: white; border: none; padding: 10px 20px; border-radius: 10px; margin-bottom: 20px; cursor: pointer; }
     </style>
 </head>
 <body>
 
-    <div class="pantalla">
-        <a href="index.html" class="btn-regresar">← Volver al Dashboard</a>
+    <div id="perfil-header">
+        <img id="user-avatar" src="" alt="">
+        <h1 style="font-size: 1.2rem; color: var(--acento-gastos);">Finanzas Focus</h1>
+    </div>
 
-        <header style="text-align: center; margin-bottom: 20px;">
-            <h1>Mis Gastos 💰</h1>
-        </header>
+    <main>
+        <section class="resumen-total">
+            <span class="monto-grande" id="saldo-disponible">$0.00</span>
+            <p style="margin: 5px 0 0; color: #666; font-size: 0.8rem; letter-spacing: 1px;">DISPONIBLE TOTAL</p>
+        </section>
 
-        <main>
-            <section class="resumen-card">
-                <span class="saldo-monto" id="saldo-total">$0.00</span>
-                <span style="color: #888; font-size: 0.8rem; text-transform: uppercase;">Saldo Disponible</span>
-            </section>
+        <button class="btn-toggle" onclick="toggleApartados()">💎 Ver mis Apartados</button>
+        <div id="seccion-apartados">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h3 style="margin:0; font-size:1rem;">Mis Bolsillos</h3>
+                <button onclick="crearApartado()" style="background:var(--acento-apartado); border:none; border-radius:5px; padding:5px 10px; font-size:0.7rem; font-weight:bold; cursor:pointer;">+ NUEVO</button>
+            </div>
+            <div class="grid-apartados" id="contenedor-apartados"></div>
+        </div>
 
-            <section class="seccion-apartado">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <b style="color: var(--acento-gastos);">🎯 Mi Apartado / Ahorro</b>
-                    <span id="porcentaje-ahorro">0%</span>
-                </div>
-                <div class="progreso-barra">
-                    <div id="barra-llenado" class="progreso-llenado" style="width: 0%;"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
-                    <span>Ahorrado: <b id="ahorro-actual">$0</b></span>
-                    <span>Meta: <b id="ahorro-meta">$0</b></span>
-                </div>
-                <button class="btn-accion" onclick="configurarMeta()" style="margin-top: 10px; font-size: 0.7rem; padding: 5px 10px;">Configurar Meta</button>
-            </section>
-
-            <div class="form-gastos">
-                <input type="text" id="concepto" placeholder="Concepto (Ej. Despensa, Pago...)">
-                <input type="number" id="monto" placeholder="Monto $0.00">
-                <select id="tipo">
-                    <option value="egreso">Gasto (Salida)</option>
-                    <option value="ingreso">Ingreso (Entrada)</option>
-                    <option value="ahorro">Mover a Ahorro</option>
-                </select>
-                <button class="btn-accion" onclick="agregarMovimiento()">Registrar Movimiento</button>
+        <div class="caja-movimiento">
+            <h3 style="margin: 0 0 20px 0; text-align: center; color: var(--acento-gastos);">Registrar Movimiento</h3>
+            
+            <div class="campo">
+                <label>Concepto</label>
+                <input type="text" id="concepto" placeholder="Ej: Pago de Luz, Sueldo, Ahorro...">
             </div>
 
-            <h3 style="margin-bottom: 10px;">Historial Reciente</h3>
-            <div id="lista-movimientos"></div>
-        </main>
+            <div class="campo">
+                <label>Monto</label>
+                <input type="number" id="monto" placeholder="$ 0.00">
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="campo">
+                    <label>Origen (Desde)</label>
+                    <select id="origen">
+                        <option value="externo">💰 Dinero Externo (Ingreso)</option>
+                        <option value="general">📱 Saldo Disponible</option>
+                    </select>
+                </div>
+
+                <div class="campo">
+                    <label>Destino (Hacia)</label>
+                    <select id="destino">
+                        <option value="gasto">💸 Gasto (Descontar)</option>
+                        <option value="general">📱 Saldo Disponible</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-confirmar" onclick="procesarMovimiento()">CONFIRMAR MOVIMIENTO</button>
+        </div>
+    </main>
+
+    <button class="btn-flotante-historial" onclick="abrirHistorial()">📜 Ver Historial</button>
+
+    <div id="modal-historial">
+        <button class="btn-cerrar" onclick="cerrarHistorial()">← Volver</button>
+        <h2 style="color: var(--acento-gastos);">Registro de Movimientos</h2>
+        <div id="lista-historial"></div>
     </div>
 
     <script>
-        let movimientos = JSON.parse(localStorage.getItem('focus_gastos')) || [];
-        let metaAhorro = parseFloat(localStorage.getItem('focus_meta_ahorro')) || 0;
+        let finanzas = JSON.parse(localStorage.getItem('focus_finanzas_v3')) || {
+            saldoGeneral: 0,
+            apartados: [],
+            historial: []
+        };
 
-        function calcularYRenderizar() {
-            let saldo = 0;
-            let ahorrado = 0;
-            const container = document.getElementById('lista-movimientos');
-            container.innerHTML = '';
+        const userData = JSON.parse(localStorage.getItem('focus_user'));
+        if (userData) document.getElementById('user-avatar').src = userData.photo;
 
-            movimientos.forEach((m, index) => {
-                if (m.tipo === 'ingreso') saldo += m.monto;
-                if (m.tipo === 'egreso') saldo -= m.monto;
-                if (m.tipo === 'ahorro') {
-                    saldo -= m.monto;
-                    ahorrado += m.monto;
-                }
-
-                container.innerHTML += `
-                    <div class="gasto-item ${m.tipo}">
-                        <div>
-                            <b style="display:block;">${m.concepto}</b>
-                            <small style="color:#666;">${m.fecha}</small>
-                        </div>
-                        <div style="text-align:right;">
-                            <b style="color: ${m.tipo === 'ingreso' ? '#00ff88' : '#ff4d6d'}">
-                                ${m.tipo === 'ingreso' ? '+' : '-'}$${m.monto.toFixed(2)}
-                            </b>
-                            <button onclick="eliminarMovimiento(${index})" style="background:none; border:none; color:#444; margin-left:10px;">✕</button>
-                        </div>
-                    </div>
-                `;
-            });
-
-            // Actualizar Interfaz
-            document.getElementById('saldo-total').innerText = `$${saldo.toFixed(2)}`;
-            document.getElementById('ahorro-actual').innerText = `$${ahorrado.toFixed(2)}`;
-            document.getElementById('ahorro-meta').innerText = `$${metaAhorro.toFixed(2)}`;
-
-            // Calcular barra de progreso
-            let porcentaje = metaAhorro > 0 ? (ahorrado / metaAhorro) * 100 : 0;
-            if (porcentaje > 100) porcentaje = 100;
-            document.getElementById('barra-llenado').style.width = porcentaje + '%';
-            document.getElementById('porcentaje-ahorro').innerText = Math.round(porcentaje) + '%';
+        function guardar() {
+            localStorage.setItem('focus_finanzas_v3', JSON.stringify(finanzas));
+            render();
         }
 
-        function agregarMovimiento() {
+        function toggleApartados() {
+            const sec = document.getElementById('seccion-apartados');
+            sec.style.display = (sec.style.display === 'block') ? 'none' : 'block';
+        }
+
+        function crearApartado() {
+            const nombre = prompt("Nombre del nuevo apartado:");
+            if (nombre) {
+                finanzas.apartados.push({ id: "ap-" + Date.now(), nombre, saldo: 0 });
+                guardar();
+            }
+        }
+
+        function procesarMovimiento() {
             const concepto = document.getElementById('concepto').value;
             const monto = parseFloat(document.getElementById('monto').value);
-            const tipo = document.getElementById('tipo').value;
+            const origen = document.getElementById('origen').value;
+            const destino = document.getElementById('destino').value;
 
-            if (!concepto || isNaN(monto)) return alert("Completa los datos correctamente");
+            if (!concepto || isNaN(monto) || monto <= 0) return alert("Ingresa concepto y monto válido.");
 
-            const nuevo = {
+            // Lógica automática de tipo para el historial
+            let tipoAuto = 'traspaso';
+            if (destino === 'gasto') tipoAuto = 'salida';
+            if (origen === 'externo') tipoAuto = 'ingreso';
+
+            // 1. Resta del Origen
+            if (origen === 'general') {
+                finanzas.saldoGeneral -= monto;
+            } else if (origen.startsWith('ap-')) {
+                const apIdx = finanzas.apartados.findIndex(a => a.id === origen);
+                finanzas.apartados[apIdx].saldo -= monto;
+            }
+
+            // 2. Suma al Destino
+            if (destino === 'general') {
+                finanzas.saldoGeneral += monto;
+            } else if (destino.startsWith('ap-')) {
+                const apIdx = finanzas.apartados.findIndex(a => a.id === destino);
+                finanzas.apartados[apIdx].saldo += monto;
+            }
+
+            // 3. Registro
+            finanzas.historial.unshift({
                 concepto,
                 monto,
-                tipo,
-                fecha: new Date().toLocaleDateString()
-            };
+                origen: obtenerNombre(origen),
+                destino: obtenerNombre(destino),
+                tipo: tipoAuto,
+                fecha: new Date().toLocaleString()
+            });
 
-            movimientos.unshift(nuevo);
-            localStorage.setItem('focus_gastos', JSON.stringify(movimientos));
-            
-            document.getElementById('concepto').value = '';
-            document.getElementById('monto').value = '';
-            calcularYRenderizar();
+            document.getElementById('concepto').value = "";
+            document.getElementById('monto').value = "";
+            guardar();
+            alert("Movimiento procesado con éxito");
         }
 
-        function configurarMeta() {
-            const nuevaMeta = prompt("¿Cuál es tu meta de ahorro?", metaAhorro);
-            if (nuevaMeta !== null) {
-                metaAhorro = parseFloat(nuevaMeta) || 0;
-                localStorage.setItem('focus_meta_ahorro', metaAhorro);
-                calcularYRenderizar();
+        function obtenerNombre(slug) {
+            if (slug === 'general') return "Saldo Disponible";
+            if (slug === 'externo') return "Dinero Externo";
+            if (slug === 'gasto') return "Gasto Realizado";
+            const ap = finanzas.apartados.find(a => a.id === slug);
+            return ap ? ap.nombre : "Apartado";
+        }
+
+        function render() {
+            document.getElementById('saldo-disponible').innerText = `$${finanzas.saldoGeneral.toFixed(2)}`;
+
+            const contApartados = document.getElementById('contenedor-apartados');
+            const selOrigen = document.getElementById('origen');
+            const selDestino = document.getElementById('destino');
+
+            selOrigen.innerHTML = '<option value="externo">💰 Dinero Externo (Ingreso)</option><option value="general">📱 Saldo Disponible</option>';
+            selDestino.innerHTML = '<option value="gasto">💸 Gasto (Descontar)</option><option value="general">📱 Saldo Disponible</option>';
+            contApartados.innerHTML = "";
+
+            finanzas.apartados.forEach(ap => {
+                contApartados.innerHTML += `
+                    <div class="card-apartado">
+                        <h4>${ap.nombre}</h4>
+                        <b>$${ap.saldo.toFixed(2)}</b>
+                        <button onclick="borrarApartado('${ap.id}')" style="background:none; border:none; color:#444; position:absolute; right:5px; top:5px; cursor:pointer;">×</button>
+                    </div>
+                `;
+                const opt = `<option value="${ap.id}">💎 ${ap.nombre}</option>`;
+                selOrigen.innerHTML += opt;
+                selDestino.innerHTML += opt;
+            });
+
+            const listaHist = document.getElementById('lista-historial');
+            listaHist.innerHTML = finanzas.historial.map(h => {
+                let color = '#00f2ff'; // Traspaso
+                if(h.tipo === 'ingreso') color = '#00ff88'; // Verde
+                if(h.tipo === 'salida') color = '#ff4d6d'; // Rojo
+                
+                return `
+                <div class="item-historial">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                        <b style="color:white">${h.concepto}</b>
+                        <span style="color:${color}; font-weight:bold;">${h.tipo==='ingreso'?'+':'-'} $${h.monto.toFixed(2)}</span>
+                    </div>
+                    <div style="font-size:0.75rem; color:#888;">
+                        De: ${h.origen} → A: ${h.destino}<br>
+                        ${h.fecha}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function borrarApartado(id) {
+            if(confirm("¿Borrar apartado?")) {
+                finanzas.apartados = finanzas.apartados.filter(a => a.id !== id);
+                guardar();
             }
         }
 
-        function eliminarMovimiento(index) {
-            if (confirm("¿Eliminar este registro?")) {
-                movimientos.splice(index, 1);
-                localStorage.setItem('focus_gastos', JSON.stringify(movimientos));
-                calcularYRenderizar();
-            }
-        }
+        function abrirHistorial() { document.getElementById('modal-historial').style.display = 'block'; }
+        function cerrarHistorial() { document.getElementById('modal-historial').style.display = 'none'; }
 
-        calcularYRenderizar();
+        render();
     </script>
 </body>
 </html>
