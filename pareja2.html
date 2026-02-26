@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Focus - Conexión</title>
     <style>
         :root {
@@ -15,6 +15,8 @@
             --azul: #00f2ff;
         }
 
+        html, body { overflow-x: hidden; width: 100%; position: relative; }
+
         body {
             background-color: var(--fondo);
             color: var(--texto);
@@ -24,146 +26,227 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            box-sizing: border-box;
         }
 
-        .header { width: 100%; display: flex; align-items: center; margin-bottom: 30px; }
-        .btn-back { color: var(--azul); text-decoration: none; font-size: 1.2rem; margin-right: 15px; }
+        #pantalla-acceso {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: var(--fondo); z-index: 2000;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; box-sizing: border-box;
+        }
 
-        /* Semáforo */
+        .input-registro {
+            width: 100%; max-width: 320px; background: #1a1a1a; border: 1px solid #333;
+            color: white; padding: 15px; border-radius: 12px; margin-bottom: 15px; 
+            text-align: center; font-size: 1rem; box-sizing: border-box;
+        }
+
+        .header { 
+            width: 100%; max-width: 400px; 
+            display: flex; flex-direction: column; align-items: center; 
+            margin-bottom: 25px; text-align: center;
+        }
+
+        .btn-back { position: absolute; left: 20px; color: var(--azul); text-decoration: none; font-size: 1.5rem; }
+
         .card-status {
             background: var(--tarjeta);
-            border-radius: 20px;
-            padding: 20px;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-            border: 1px solid #333;
-            margin-bottom: 20px;
+            border-radius: 20px; padding: 20px; width: 100%; max-width: 400px;
+            text-align: center; border: 1px solid #333; margin-bottom: 20px; box-sizing: border-box;
         }
 
-        .semaforo {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
+        .semaforo { display: flex; justify-content: space-around; margin: 20px 0; }
+
+        .luz { width: 65px; height: 65px; border-radius: 50%; opacity: 0.15; cursor: pointer; transition: 0.4s; }
+        .luz.verde { background: var(--verde); }
+        .luz.amarillo { background: var(--amarillo); }
+        .luz.rojo { background: var(--rojo); }
+
+        .luz.activa { 
+            opacity: 1; border: 2px solid white; transform: scale(1.1);
+            box-shadow: 0 0 30px currentColor;
         }
 
-        .luz {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            opacity: 0.2;
-            cursor: pointer;
-            transition: 0.3s;
-            border: 2px solid transparent;
-        }
-
-        .luz.verde { background: var(--verde); box-shadow: 0 0 20px var(--verde); }
-        .luz.amarillo { background: var(--amarillo); box-shadow: 0 0 20px var(--amarillo); }
-        .luz.rojo { background: var(--rojo); box-shadow: 0 0 20px var(--rojo); }
-
-        .luz.activa { opacity: 1; border-color: white; transform: scale(1.1); }
-
-        /* Mensajes de Atención */
         .btn-atencion {
             background: linear-gradient(45deg, #00f2ff, #00ff88);
-            color: black;
-            border: none;
-            padding: 15px;
-            border-radius: 12px;
-            width: 100%;
-            font-weight: bold;
-            font-size: 1rem;
-            margin-bottom: 20px;
-            cursor: pointer;
+            color: black; border: none; padding: 18px; border-radius: 15px; 
+            width: 100%; max-width: 400px; font-weight: bold; font-size: 1rem; 
+            margin-bottom: 20px; cursor: pointer; box-sizing: border-box;
         }
 
-        .log-emocional {
-            width: 100%;
-            max-width: 400px;
+        #modal-msj {
+            display: none; position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.95); z-index: 3000;
+            flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; box-sizing: border-box;
         }
 
+        .msj-content {
+            background: var(--tarjeta); padding: 25px; border-radius: 20px;
+            width: 100%; max-width: 350px; border: 1px solid #333; box-sizing: border-box;
+        }
+
+        .btn-frase {
+            width: 100%; background: #222; color: white; border: 1px solid #444;
+            padding: 12px; border-radius: 10px; margin-bottom: 10px; text-align: left;
+        }
+
+        .log-emocional { width: 100%; max-width: 400px; padding-bottom: 40px; }
         .log-item {
-            background: #1a1a1a;
-            padding: 12px;
-            border-radius: 10px;
-            margin-bottom: 10px;
-            border-left: 4px solid var(--azul);
-            font-size: 0.9rem;
+            background: #1a1a1a; padding: 12px; border-radius: 10px;
+            margin-bottom: 10px; border-left: 4px solid var(--azul); font-size: 0.9rem;
         }
-
         .log-item small { color: #666; display: block; margin-top: 5px; }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <a href="index.html" class="btn-back">←</a>
-        <h1 style="font-size: 1.4rem; margin: 0;">Semáforo Emocional</h1>
-    </div>
-
-    <div class="card-status">
-        <p style="margin: 0; color: #888;">¿Cómo te sientes hoy respecto a nosotros?</p>
-        <div class="semaforo">
-            <div id="v" class="luz verde" onclick="setEstado('verde', 'Todo bien, me siento amado/a')"></div>
-            <div id="a" class="luz amarillo" onclick="setEstado('amarillo', 'Me siento un poco solo/a o ignorado/a')"></div>
-            <div id="r" class="luz rojo" onclick="setEstado('rojo', 'Necesito que hablemos pronto')"></div>
+    <div id="pantalla-acceso">
+        <h2 id="texto-acceso" style="color: var(--azul); margin-bottom: 20px;">Acceso a Apartado</h2>
+        <div id="campos-registro" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+            <input type="text" id="reg-apartado" class="input-registro" placeholder="Nombre de tu Apartado">
+            <input type="text" id="reg-pareja" class="input-registro" placeholder="Nombre de tu Pareja (Eli)">
+            <input type="number" id="reg-tel" class="input-registro" placeholder="WhatsApp (52...)">
+            <input type="password" id="reg-pin" class="input-registro" placeholder="PIN de 4 dígitos" maxlength="4">
+            <button class="btn-atencion" onclick="procesarAcceso()">ENTRAR</button>
+            <button onclick="localStorage.removeItem('focus_pareja_config'); location.reload();" style="background:none; border:none; color:#444; margin-top:20px; font-size:0.7rem;">Reiniciar Configuración</button>
         </div>
-        <h3 id="status-texto" style="color: var(--azul);">Selecciona un estado</h3>
     </div>
 
-    <button class="btn-atencion" onclick="enviarSenal()">
-        🚀 ENVIAR SEÑAL DE ATENCIÓN
-    </button>
+    <div id="app-content" style="display: none; width: 100%; max-width: 400px;">
+        <div class="header">
+            <a href="index.html" class="btn-back">←</a>
+            <h1 style="font-size: 1.5rem; margin: 0;">Semáforo Emocional</h1>
+            <p id="display-pareja" style="margin: 5px 0 0; color: var(--verde); font-weight: bold; font-size: 1.2rem;"></p>
+        </div>
 
-    <div class="log-emocional">
-        <p style="color: #666; font-size: 0.8rem; text-transform: uppercase;">Historial de conexión</p>
-        <div id="historial"></div>
+        <div class="card-status">
+            <p style="margin: 0; color: #888; font-size: 0.9rem;">¿Cómo te sientes hoy respecto a nosotros?</p>
+            <div class="semaforo">
+                <div id="luz-verde" class="luz verde" onclick="subirEstado('verde', 'Todo bien, me siento amado/a')"></div>
+                <div id="luz-amarillo" class="luz amarillo" onclick="subirEstado('amarillo', 'Me siento un poco solo/a o ignorado/a')"></div>
+                <div id="luz-rojo" class="luz rojo" onclick="subirEstado('rojo', 'Necesito que hablemos pronto')"></div>
+            </div>
+            <h3 id="status-texto" style="color: var(--azul); margin: 10px 0 0;">Selecciona un estado</h3>
+        </div>
+
+        <button class="btn-atencion" onclick="abrirMensajes()">🚀 ENVIAR SEÑAL DE ATENCIÓN</button>
+
+        <div class="log-emocional">
+            <p style="color: #666; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 15px;">Historial de conexión</p>
+            <div id="historial"></div>
+        </div>
     </div>
 
-    <script>
-        let historial = JSON.parse(localStorage.getItem('historial_nosotros')) || [];
+    <div id="modal-msj">
+        <div class="msj-content">
+            <h3 style="margin-top:0; color:var(--verde); text-align: center;">Enviar Señal</h3>
+            <button class="btn-frase" onclick="enviarWA('¿Cómo te va hoy amorcito, que tal tu día?')">¿Cómo te va hoy amor?</button>
+            <button class="btn-frase" onclick="enviarWA('¿Ya comiste amor?')">¿Ya comiste amor?</button>
+            <button class="btn-frase" onclick="enviarWA('Acuérdate que nos vemos en un ratito')">Recordar nuestra cita</button>
+            <button class="btn-frase" onclick="enviarWA('Ya quiero verte mi vida ❤️')">Ya quiero verte</button>
+            <textarea id="custom-wa" placeholder="Mensaje personalizado..." style="width:100%; background:#000; color:white; border:1px solid #444; border-radius:10px; padding:10px; margin-bottom:10px; box-sizing:border-box;"></textarea>
+            <button class="btn-atencion" style="margin-bottom:10px;" onclick="enviarWA(document.getElementById('custom-wa').value)">ENVIAR</button>
+            <button style="background:none; border:none; color:#888; width:100%; cursor:pointer;" onclick="cerrarMensajes()">Cancelar</button>
+        </div>
+    </div>
 
-        function setEstado(color, texto) {
-            // Limpiar luces
-            document.querySelectorAll('.luz').forEach(l => l.classList.remove('activa'));
-            // Activar seleccionada
-            const id = color === 'verde' ? 'v' : color === 'amarillo' ? 'a' : 'r';
-            document.getElementById(id).classList.add('activa');
-            
-            document.getElementById('status-texto').innerText = texto;
-            
-            // Guardar en historial
-            const nuevoPunto = {
-                desc: texto,
-                fecha: new Date().toLocaleString(),
-                color: color
-            };
-            historial.unshift(nuevoPunto);
-            if(historial.length > 5) historial.pop(); // Solo guardamos los últimos 5
-            
-            localStorage.setItem('historial_nosotros', JSON.stringify(historial));
-            renderHistorial();
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, doc, onSnapshot, updateDoc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyB0ahP8K53dm8BIRhjXYxCbSJ8sNfQi-NI",
+          authDomain: "refugio-de-patitas.firebaseapp.com",
+          projectId: "refugio-de-patitas",
+          storageBucket: "refugio-de-patitas.firebasestorage.app",
+          messagingSenderId: "5921473252",
+          appId: "1:5921473252:web:16f18c4c7cf1ad1509e2f1"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        let configLocal = JSON.parse(localStorage.getItem('focus_pareja_config'));
+
+        window.onload = () => {
+            if(!configLocal) {
+                document.getElementById('texto-acceso').innerText = "Crear Apartado de Pareja";
+            } else {
+                document.getElementById('texto-acceso').innerText = "Acceder a " + configLocal.apartado;
+                document.getElementById('reg-pareja').style.display = 'none';
+                document.getElementById('reg-tel').style.display = 'none';
+            }
+        };
+
+        // EXPOSICIÓN GLOBAL DE FUNCIONES (Para que los botones funcionen)
+        window.procesarAcceso = () => {
+            const apartado = document.getElementById('reg-apartado').value.trim();
+            const pin = document.getElementById('reg-pin').value.trim();
+
+            if(!configLocal) {
+                const pareja = document.getElementById('reg-pareja').value.trim();
+                const tel = document.getElementById('reg-tel').value.trim();
+                if(apartado && pareja && tel && pin.length === 4) {
+                    const data = { apartado, nombre: pareja, tel, pin };
+                    localStorage.setItem('focus_pareja_config', JSON.stringify(data));
+                    location.reload();
+                } else { alert("Completa todos los campos."); }
+            } else {
+                // Validación ignorando mayúsculas para evitar errores
+                if(apartado.toLowerCase() === configLocal.apartado.toLowerCase() && pin === configLocal.pin) {
+                    document.getElementById('pantalla-acceso').style.display = 'none';
+                    document.getElementById('app-content').style.display = 'block';
+                    document.getElementById('display-pareja').innerText = configLocal.nombre;
+                    escucharFirebase();
+                } else { alert("Datos incorrectos."); }
+            }
+        };
+
+        function escucharFirebase() {
+            const docId = configLocal.apartado.replace(/\s+/g, '_').toLowerCase();
+            const docRef = doc(db, "parejas", docId);
+            onSnapshot(docRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    actualizarInterfaz(data.color, data.texto, data.historial || []);
+                } else {
+                    setDoc(docRef, { color: 'verde', texto: 'Conexión establecida', historial: [] });
+                }
+            });
         }
 
-        function renderHistorial() {
+        window.subirEstado = async (color, texto) => {
+            const docId = configLocal.apartado.replace(/\s+/g, '_').toLowerCase();
+            const docRef = doc(db, "parejas", docId);
+            const nuevoPunto = { desc: texto, fecha: new Date().toLocaleString(), color: color };
+            const docSnap = await getDoc(docRef);
+            let historialPrevio = docSnap.exists() ? docSnap.data().historial : [];
+            historialPrevio.unshift(nuevoPunto);
+            if(historialPrevio.length > 5) historialPrevio.pop();
+            await updateDoc(docRef, { color, texto, historial: historialPrevio });
+        };
+
+        function actualizarInterfaz(color, texto, historial) {
+            document.querySelectorAll('.luz').forEach(l => l.classList.remove('activa'));
+            const id = `luz-${color}`;
+            if(document.getElementById(id)) document.getElementById(id).classList.add('activa');
+            document.getElementById('status-texto').innerText = texto;
             const container = document.getElementById('historial');
             container.innerHTML = historial.map(h => `
                 <div class="log-item" style="border-left-color: var(--${h.color})">
-                    ${h.desc}
-                    <small>${h.fecha}</small>
+                    ${h.desc} <small>${h.fecha}</small>
                 </div>
             `).join('');
         }
 
-        function enviarSenal() {
-            // Esto genera un link directo a tu WhatsApp con un mensaje predefinido
-            // Solo cambia el número de teléfono por el tuyo para que ella te lo envíe a ti, 
-            // o que ella lo use para avisarte.
-            const mensaje = encodeURIComponent("Hola amor, estoy usando la app. Solo quería decirte que te amo y que eres importante para mí. ❤️");
-            window.open(`https://wa.me/?text=${mensaje}`, '_blank');
-        }
-
-        renderHistorial();
+        window.abrirMensajes = () => document.getElementById('modal-msj').style.display = 'flex';
+        window.cerrarMensajes = () => document.getElementById('modal-msj').style.display = 'none';
+        window.enviarWA = (frase) => {
+            if(!frase) return;
+            window.open(`https://wa.me/${configLocal.tel}?text=${encodeURIComponent(frase)}`, '_blank');
+        };
     </script>
 </body>
 </html>
