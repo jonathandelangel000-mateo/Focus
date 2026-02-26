@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - Mis Gastos</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --acento-gastos: #00ff88; /* Verde neón para dinero */
+            --tarjeta: #1e1e1e;
+        }
+
+        body { background-color: #0a0a0a; color: white; margin: 0; padding: 20px; font-family: sans-serif; }
+
+        /* Resumen de Saldo */
+        .resumen-card {
+            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+            border: 2px solid var(--acento-gastos);
+            border-radius: 20px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 255, 136, 0.1);
+        }
+
+        .saldo-monto { font-size: 2.5rem; font-weight: bold; color: var(--acento-gastos); display: block; }
+
+        /* Apartados / Ahorro */
+        .seccion-apartado {
+            background: #161616;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px dashed var(--acento-gastos);
+        }
+
+        .progreso-barra {
+            width: 100%;
+            height: 10px;
+            background: #333;
+            border-radius: 5px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+
+        .progreso-llenado {
+            height: 100%;
+            background: var(--acento-gastos);
+            box-shadow: 0 0 10px var(--acento-gastos);
+            transition: width 0.5s;
+        }
+
+        /* Formulario */
+        .form-gastos {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input, select {
+            background: #252525;
+            border: 1px solid #333;
+            color: white;
+            padding: 12px;
+            border-radius: 8px;
+        }
+
+        .btn-accion {
+            background: var(--acento-gastos);
+            color: black;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* Lista de Movimientos */
+        .gasto-item {
+            background: var(--tarjeta);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #444;
+        }
+
+        .gasto-item.ingreso { border-left-color: var(--acento-gastos); }
+        .gasto-item.egreso { border-left-color: #ff4d6d; }
+
+        .btn-regresar { color: var(--acento-gastos); text-decoration: none; display: inline-block; margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+
+    <div class="pantalla">
+        <a href="index.html" class="btn-regresar">← Volver al Dashboard</a>
+
+        <header style="text-align: center; margin-bottom: 20px;">
+            <h1>Mis Gastos 💰</h1>
+        </header>
+
+        <main>
+            <section class="resumen-card">
+                <span class="saldo-monto" id="saldo-total">$0.00</span>
+                <span style="color: #888; font-size: 0.8rem; text-transform: uppercase;">Saldo Disponible</span>
+            </section>
+
+            <section class="seccion-apartado">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <b style="color: var(--acento-gastos);">🎯 Mi Apartado / Ahorro</b>
+                    <span id="porcentaje-ahorro">0%</span>
+                </div>
+                <div class="progreso-barra">
+                    <div id="barra-llenado" class="progreso-llenado" style="width: 0%;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 0.85rem;">
+                    <span>Ahorrado: <b id="ahorro-actual">$0</b></span>
+                    <span>Meta: <b id="ahorro-meta">$0</b></span>
+                </div>
+                <button class="btn-accion" onclick="configurarMeta()" style="margin-top: 10px; font-size: 0.7rem; padding: 5px 10px;">Configurar Meta</button>
+            </section>
+
+            <div class="form-gastos">
+                <input type="text" id="concepto" placeholder="Concepto (Ej. Despensa, Pago...)">
+                <input type="number" id="monto" placeholder="Monto $0.00">
+                <select id="tipo">
+                    <option value="egreso">Gasto (Salida)</option>
+                    <option value="ingreso">Ingreso (Entrada)</option>
+                    <option value="ahorro">Mover a Ahorro</option>
+                </select>
+                <button class="btn-accion" onclick="agregarMovimiento()">Registrar Movimiento</button>
+            </div>
+
+            <h3 style="margin-bottom: 10px;">Historial Reciente</h3>
+            <div id="lista-movimientos"></div>
+        </main>
+    </div>
+
+    <script>
+        let movimientos = JSON.parse(localStorage.getItem('focus_gastos')) || [];
+        let metaAhorro = parseFloat(localStorage.getItem('focus_meta_ahorro')) || 0;
+
+        function calcularYRenderizar() {
+            let saldo = 0;
+            let ahorrado = 0;
+            const container = document.getElementById('lista-movimientos');
+            container.innerHTML = '';
+
+            movimientos.forEach((m, index) => {
+                if (m.tipo === 'ingreso') saldo += m.monto;
+                if (m.tipo === 'egreso') saldo -= m.monto;
+                if (m.tipo === 'ahorro') {
+                    saldo -= m.monto;
+                    ahorrado += m.monto;
+                }
+
+                container.innerHTML += `
+                    <div class="gasto-item ${m.tipo}">
+                        <div>
+                            <b style="display:block;">${m.concepto}</b>
+                            <small style="color:#666;">${m.fecha}</small>
+                        </div>
+                        <div style="text-align:right;">
+                            <b style="color: ${m.tipo === 'ingreso' ? '#00ff88' : '#ff4d6d'}">
+                                ${m.tipo === 'ingreso' ? '+' : '-'}$${m.monto.toFixed(2)}
+                            </b>
+                            <button onclick="eliminarMovimiento(${index})" style="background:none; border:none; color:#444; margin-left:10px;">✕</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // Actualizar Interfaz
+            document.getElementById('saldo-total').innerText = `$${saldo.toFixed(2)}`;
+            document.getElementById('ahorro-actual').innerText = `$${ahorrado.toFixed(2)}`;
+            document.getElementById('ahorro-meta').innerText = `$${metaAhorro.toFixed(2)}`;
+
+            // Calcular barra de progreso
+            let porcentaje = metaAhorro > 0 ? (ahorrado / metaAhorro) * 100 : 0;
+            if (porcentaje > 100) porcentaje = 100;
+            document.getElementById('barra-llenado').style.width = porcentaje + '%';
+            document.getElementById('porcentaje-ahorro').innerText = Math.round(porcentaje) + '%';
+        }
+
+        function agregarMovimiento() {
+            const concepto = document.getElementById('concepto').value;
+            const monto = parseFloat(document.getElementById('monto').value);
+            const tipo = document.getElementById('tipo').value;
+
+            if (!concepto || isNaN(monto)) return alert("Completa los datos correctamente");
+
+            const nuevo = {
+                concepto,
+                monto,
+                tipo,
+                fecha: new Date().toLocaleDateString()
+            };
+
+            movimientos.unshift(nuevo);
+            localStorage.setItem('focus_gastos', JSON.stringify(movimientos));
+            
+            document.getElementById('concepto').value = '';
+            document.getElementById('monto').value = '';
+            calcularYRenderizar();
+        }
+
+        function configurarMeta() {
+            const nuevaMeta = prompt("¿Cuál es tu meta de ahorro?", metaAhorro);
+            if (nuevaMeta !== null) {
+                metaAhorro = parseFloat(nuevaMeta) || 0;
+                localStorage.setItem('focus_meta_ahorro', metaAhorro);
+                calcularYRenderizar();
+            }
+        }
+
+        function eliminarMovimiento(index) {
+            if (confirm("¿Eliminar este registro?")) {
+                movimientos.splice(index, 1);
+                localStorage.setItem('focus_gastos', JSON.stringify(movimientos));
+                calcularYRenderizar();
+            }
+        }
+
+        calcularYRenderizar();
+    </script>
+</body>
+</html>
