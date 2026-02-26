@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - Nuestros Compromisos</title>
+    <style>
+        :root {
+            --fondo: #050505;
+            --tarjeta: #121212;
+            --acento: #00f2ff; /* Cian para claridad y transparencia */
+            --texto: #ffffff;
+            --borde: #333;
+        }
+
+        body {
+            background-color: var(--fondo);
+            color: var(--texto);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .contenedor {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .btn-regresar {
+            color: var(--acento);
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 { font-size: 1.5rem; color: var(--acento); text-transform: uppercase; letter-spacing: 2px; }
+
+        /* Estilo de los Pilares */
+        .pilar-card {
+            background: var(--tarjeta);
+            border: 1px solid var(--borde);
+            border-left: 5px solid var(--acento);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 242, 255, 0.05);
+        }
+
+        .pilar-card h3 {
+            margin-top: 0;
+            color: var(--acento);
+            font-size: 1rem;
+        }
+
+        .pilar-card p {
+            margin-bottom: 0;
+            font-size: 0.95rem;
+            color: #ccc;
+        }
+
+        /* Sección de Firmas Simbólicas */
+        .firmas {
+            margin-top: 40px;
+            padding: 20px;
+            border-top: 1px solid var(--borde);
+            text-align: center;
+        }
+
+        .voto {
+            font-style: italic;
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 20px;
+        }
+
+        .btn-compromiso {
+            background: transparent;
+            border: 2px solid var(--acento);
+            color: var(--acento);
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-compromiso:active {
+            background: var(--acento);
+            color: black;
+        }
+
+        .recordatorio-paciencia {
+            background: rgba(255, 45, 85, 0.1);
+            border: 1px solid #ff2d55;
+            color: #ff2d55;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 30px;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="contenedor">
+        <a href="index.html" class="btn-regresar">← Volver al Dashboard</a>
+
+        <header>
+            <h1>Reconstruyendo</h1>
+            <p style="color: #666;">Ladrillo por ladrillo</p>
+        </header>
+
+        <div id="muro-compromisos">
+            <div class="pilar-card">
+                <h3>Transparencia Total</h3>
+                <p>"Necesito verdades completas, sinceridad total. Ocultar algo solo alimenta la mentira."</p>
+            </div>
+
+            <div class="pilar-card">
+                <h3>Cero Contacto Externo</h3>
+                <p>"Si te vuelven a buscar, no elimines nada. Avísame, merezco saberlo porque soy tu pareja."</p>
+            </div>
+
+            <div class="pilar-card">
+                <h3>Atención y Presencia</h3>
+                <p>"Cuando necesites tiempo, dímelo. No habrá más 'estoy ocupado', buscaremos nuestro espacio."</p>
+            </div>
+
+            <div class="pilar-card">
+                <h3>Paciencia con el Dolor</h3>
+                <p>"Reconstruir lleva tiempo. Habrá días de dudas y rabia, y necesito que escuches sin ponerte a la defensiva."</p>
+            </div>
+        </div>
+
+        <div class="firmas">
+            <p class="voto">"Perdonar es una decisión, la confianza es un sentimiento que se gana."</p>
+            <button class="btn-compromiso" onclick="confirmarVoto()">RENOVAR COMPROMISO HOY</button>
+            <p id="msg-confirmacion" style="margin-top:10px; color: var(--acento); display:none;">Compromiso renovado. Vamos a lograrlo.</p>
+        </div>
+
+        <div class="recordatorio-paciencia">
+            ⚠️ <b>Recordatorio:</b> La exclusividad y la complicidad se cuidan todos los días. No aceptes menos.
+        </div>
+    </div>
+
+    <script>
+        function confirmarVoto() {
+            const msg = document.getElementById('msg-confirmacion');
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 3000);
+            
+            // Aquí se podría guardar la fecha del último compromiso renovado
+            localStorage.setItem('ultimo_compromiso', new Date().toLocaleString());
+        }
+    </script>
+</body>
+</html>
