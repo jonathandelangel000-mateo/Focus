@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - Tiempo de Calidad</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        :root {
+            --acento-pareja: #ff4d6d;
+            --tarjeta: #1e1e1e;
+        }
+
+        body { background-color: #0a0a0a; color: white; margin: 0; padding: 20px; font-family: sans-serif; }
+
+        .header-pareja { text-align: center; margin-bottom: 25px; }
+
+        .contador-card {
+            background: var(--tarjeta);
+            border: 2px solid var(--acento-pareja);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(255, 77, 109, 0.2);
+        }
+
+        .contador-numero { font-size: 3.5rem; font-weight: bold; color: var(--acento-pareja); display: block; }
+        .contador-label { font-size: 0.9rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+
+        .form-plan {
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input { background: #252525; border: 1px solid #333; color: white; padding: 12px; border-radius: 8px; }
+
+        .btn-guardar {
+            background: var(--acento-pareja);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .seccion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .btn-ver-completados {
+            background: none;
+            border: 1px solid var(--acento-pareja);
+            color: var(--acento-pareja);
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .plan-item {
+            background: var(--tarjeta);
+            border-left: 4px solid var(--acento-pareja);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .plan-item.realizado { border-left-color: #444; opacity: 0.7; }
+
+        .plan-info b { display: block; font-size: 1.1rem; color: var(--acento-pareja); }
+        .plan-info span { font-size: 0.85rem; color: #aaa; }
+
+        .plan-acciones button { background: none; border: none; font-size: 1.2rem; cursor: pointer; margin-left: 10px; }
+
+        .btn-regresar { color: var(--acento-pareja); text-decoration: none; display: inline-block; margin-bottom: 20px; font-size: 0.9rem; }
+        
+        .checkbox-custom { width: 22px; height: 22px; cursor: pointer; accent-color: var(--acento-pareja); }
+    </style>
+</head>
+<body>
+
+    <div class="pantalla">
+        <a href="index.html" class="btn-regresar">← Volver al Dashboard</a>
+
+        <header class="header-pareja">
+            <h1>Nuestro Tiempo ❤️</h1>
+            <p style="color: #888;">Construyendo nuestro futuro juntos</p>
+        </header>
+
+        <main>
+            <section class="contador-card">
+                <span id="dias-contador" class="contador-numero">0</span>
+                <span class="contador-label">Días desde nuestra última cita</span>
+                <br><br>
+                <button class="btn-guardar" onclick="reiniciarContador()" style="padding: 5px 15px; font-size: 0.8rem;">
+                    ¡Tuvimos una cita hoy! ✨
+                </button>
+            </section>
+
+            <div class="form-plan">
+                <input type="text" id="titulo-plan" placeholder="¿Qué haremos? (Cena, cine, parque...)">
+                <input type="date" id="fecha-plan">
+                <button class="btn-guardar" id="btn-submit" onclick="guardarPlan()">Agregar Plan</button>
+            </div>
+
+            <div class="seccion-header">
+                <h3 id="titulo-lista">📅 Mini Agenda de Planes</h3>
+                <button id="btn-ver-completados" class="btn-ver-completados" onclick="togglePantallaRealizados()" title="Ver citas realizadas">✓</button>
+            </div>
+
+            <div id="lista-planes"></div>
+        </main>
+    </div>
+
+    <script>
+        const CLAVE_AGENDA = 'focus-tareas-v2';
+        let planes = JSON.parse(localStorage.getItem('planes_pareja')) || [];
+        // Cargamos la última fecha guardada, o la de hoy por defecto
+        let ultimaCita = localStorage.getItem('ultima_cita_fecha') || new Date().toISOString().split('T')[0];
+        let editandoID = null;
+        let viendoRealizados = false;
+
+        function actualizarContador() {
+            // Creamos fechas usando solo Año, Mes, Día para evitar problemas de horas
+            const hoy = new Date();
+            const fechaHoy = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+            
+            const partes = ultimaCita.split('-');
+            const fechaUltima = new Date(partes[0], partes[1] - 1, partes[2]);
+
+            const diferenciaMilisegundos = fechaHoy - fechaUltima;
+            const dias = Math.floor(diferenciaMilisegundos / (1000 * 60 * 60 * 24));
+            
+            // Si por alguna razón sale negativo (fecha futura), mostramos 0
+            document.getElementById('dias-contador').innerText = dias < 0 ? 0 : dias;
+        }
+
+        function reiniciarContador(fechaManual = null) {
+            // Si viene de un botón es hoy, si viene de completar una cita es la fecha de esa cita
+            const nuevaFecha = fechaManual || new Date().toISOString().split('T')[0];
+            
+            if(!fechaManual) {
+                if(!confirm("¿Confirmas que hoy compartieron tiempo de calidad?")) return;
+            }
+
+            ultimaCita = nuevaFecha;
+            localStorage.setItem('ultima_cita_fecha', ultimaCita);
+            actualizarContador();
+        }
+
+        function sincronizarConAgenda(plan, eliminar = false) {
+            let tareasAgenda = JSON.parse(localStorage.getItem(CLAVE_AGENDA)) || [];
+            const idAgenda = `pareja-${plan.id}`;
+            tareasAgenda = tareasAgenda.filter(t => t.id !== idAgenda);
+            
+            if (!eliminar) {
+                tareasAgenda.push({
+                    id: idAgenda,
+                    titulo: `❤️ Cita: ${plan.titulo}`,
+                    descripcion: "Tiempo de calidad programado",
+                    fecha: plan.fecha,
+                    categoria: "pareja",
+                    completada: plan.realizada
+                });
+            }
+            localStorage.setItem(CLAVE_AGENDA, JSON.stringify(tareasAgenda));
+        }
+
+        function guardarPlan() {
+            const titulo = document.getElementById('titulo-plan').value;
+            const fecha = document.getElementById('fecha-plan').value;
+            if (!titulo || !fecha) return alert("Llena todos los campos");
+
+            if (editandoID !== null) {
+                planes = planes.map(p => {
+                    if(p.id === editandoID) {
+                        const actualizado = { ...p, titulo, fecha };
+                        sincronizarConAgenda(actualizado);
+                        return actualizado;
+                    }
+                    return p;
+                });
+                editandoID = null;
+                document.getElementById('btn-submit').innerText = "Agregar Plan";
+            } else {
+                const nuevoPlan = { id: Date.now(), titulo, fecha, realizada: false };
+                planes.push(nuevoPlan);
+                sincronizarConAgenda(nuevoPlan);
+            }
+            localStorage.setItem('planes_pareja', JSON.stringify(planes));
+            limpiarFormulario();
+            renderPlanes();
+        }
+
+        function toggleRealizada(id) {
+            planes = planes.map(p => {
+                if(p.id === id) {
+                    p.realizada = !p.realizada;
+                    // Si se marca como realizada hoy, actualizamos el contador global
+                    if(p.realizada) {
+                        reiniciarContador(p.fecha);
+                    }
+                    sincronizarConAgenda(p);
+                }
+                return p;
+            });
+            localStorage.setItem('planes_pareja', JSON.stringify(planes));
+            renderPlanes();
+        }
+
+        function togglePantallaRealizados() {
+            viendoRealizados = !viendoRealizados;
+            const btn = document.getElementById('btn-ver-completados');
+            btn.style.background = viendoRealizados ? 'var(--acento-pareja)' : 'none';
+            btn.style.color = viendoRealizados ? 'white' : 'var(--acento-pareja)';
+            renderPlanes();
+        }
+
+        function renderPlanes() {
+            const contenedor = document.getElementById('lista-planes');
+            contenedor.innerHTML = '';
+            const filtrados = planes.filter(p => p.realizada === viendoRealizados);
+            document.getElementById('titulo-lista').innerText = viendoRealizados ? "Citas Logradas ✅" : "Mini Agenda de Planes 📅";
+
+            filtrados.sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
+
+            filtrados.forEach(plan => {
+                const f = new Date(plan.fecha);
+                const fechaFormateada = `${f.getDate() + 1}/${f.getMonth() + 1}/${f.getFullYear()}`;
+                contenedor.innerHTML += `
+                    <div class="plan-item ${plan.realizada ? 'realizado' : ''}">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <input type="checkbox" class="checkbox-custom" ${plan.realizada ? 'checked' : ''} onchange="toggleRealizada(${plan.id})">
+                            <div class="plan-info">
+                                <b>${plan.titulo}</b>
+                                <span>📅 ${fechaFormateada}</span>
+                            </div>
+                        </div>
+                        <div class="plan-acciones">
+                            <button onclick="editarPlan(${plan.id})">✏️</button>
+                            <button onclick="eliminarPlan(${plan.id})">🗑️</button>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function eliminarPlan(id) {
+            if(confirm("¿Eliminar este plan?")) {
+                const planABorrar = planes.find(p => p.id === id);
+                sincronizarConAgenda(planABorrar, true);
+                planes = planes.filter(p => p.id !== id);
+                localStorage.setItem('planes_pareja', JSON.stringify(planes));
+                renderPlanes();
+            }
+        }
+
+        function editarPlan(id) {
+            const plan = planes.find(p => p.id === id);
+            document.getElementById('titulo-plan').value = plan.titulo;
+            document.getElementById('fecha-plan').value = plan.fecha;
+            editandoID = id;
+            document.getElementById('btn-submit').innerText = "Actualizar Plan";
+            window.scrollTo(0,0);
+        }
+
+        function limpiarFormulario() {
+            document.getElementById('titulo-plan').value = '';
+            document.getElementById('fecha-plan').value = '';
+        }
+
+        // Ejecutar al cargar
+        actualizarContador();
+        renderPlanes();
+    </script>
+</body>
+</html>

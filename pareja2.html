@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus - Conexión</title>
+    <style>
+        :root {
+            --fondo: #0a0a0a;
+            --tarjeta: #161616;
+            --texto: #ffffff;
+            --verde: #00ff88;
+            --amarillo: #ffcc00;
+            --rojo: #ff2d55;
+            --azul: #00f2ff;
+        }
+
+        body {
+            background-color: var(--fondo);
+            color: var(--texto);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header { width: 100%; display: flex; align-items: center; margin-bottom: 30px; }
+        .btn-back { color: var(--azul); text-decoration: none; font-size: 1.2rem; margin-right: 15px; }
+
+        /* Semáforo */
+        .card-status {
+            background: var(--tarjeta);
+            border-radius: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            border: 1px solid #333;
+            margin-bottom: 20px;
+        }
+
+        .semaforo {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+
+        .luz {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            opacity: 0.2;
+            cursor: pointer;
+            transition: 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .luz.verde { background: var(--verde); box-shadow: 0 0 20px var(--verde); }
+        .luz.amarillo { background: var(--amarillo); box-shadow: 0 0 20px var(--amarillo); }
+        .luz.rojo { background: var(--rojo); box-shadow: 0 0 20px var(--rojo); }
+
+        .luz.activa { opacity: 1; border-color: white; transform: scale(1.1); }
+
+        /* Mensajes de Atención */
+        .btn-atencion {
+            background: linear-gradient(45deg, #00f2ff, #00ff88);
+            color: black;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            width: 100%;
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+
+        .log-emocional {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .log-item {
+            background: #1a1a1a;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+            border-left: 4px solid var(--azul);
+            font-size: 0.9rem;
+        }
+
+        .log-item small { color: #666; display: block; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <a href="index.html" class="btn-back">←</a>
+        <h1 style="font-size: 1.4rem; margin: 0;">Semáforo Emocional</h1>
+    </div>
+
+    <div class="card-status">
+        <p style="margin: 0; color: #888;">¿Cómo te sientes hoy respecto a nosotros?</p>
+        <div class="semaforo">
+            <div id="v" class="luz verde" onclick="setEstado('verde', 'Todo bien, me siento amado/a')"></div>
+            <div id="a" class="luz amarillo" onclick="setEstado('amarillo', 'Me siento un poco solo/a o ignorado/a')"></div>
+            <div id="r" class="luz rojo" onclick="setEstado('rojo', 'Necesito que hablemos pronto')"></div>
+        </div>
+        <h3 id="status-texto" style="color: var(--azul);">Selecciona un estado</h3>
+    </div>
+
+    <button class="btn-atencion" onclick="enviarSenal()">
+        🚀 ENVIAR SEÑAL DE ATENCIÓN
+    </button>
+
+    <div class="log-emocional">
+        <p style="color: #666; font-size: 0.8rem; text-transform: uppercase;">Historial de conexión</p>
+        <div id="historial"></div>
+    </div>
+
+    <script>
+        let historial = JSON.parse(localStorage.getItem('historial_nosotros')) || [];
+
+        function setEstado(color, texto) {
+            // Limpiar luces
+            document.querySelectorAll('.luz').forEach(l => l.classList.remove('activa'));
+            // Activar seleccionada
+            const id = color === 'verde' ? 'v' : color === 'amarillo' ? 'a' : 'r';
+            document.getElementById(id).classList.add('activa');
+            
+            document.getElementById('status-texto').innerText = texto;
+            
+            // Guardar en historial
+            const nuevoPunto = {
+                desc: texto,
+                fecha: new Date().toLocaleString(),
+                color: color
+            };
+            historial.unshift(nuevoPunto);
+            if(historial.length > 5) historial.pop(); // Solo guardamos los últimos 5
+            
+            localStorage.setItem('historial_nosotros', JSON.stringify(historial));
+            renderHistorial();
+        }
+
+        function renderHistorial() {
+            const container = document.getElementById('historial');
+            container.innerHTML = historial.map(h => `
+                <div class="log-item" style="border-left-color: var(--${h.color})">
+                    ${h.desc}
+                    <small>${h.fecha}</small>
+                </div>
+            `).join('');
+        }
+
+        function enviarSenal() {
+            // Esto genera un link directo a tu WhatsApp con un mensaje predefinido
+            // Solo cambia el número de teléfono por el tuyo para que ella te lo envíe a ti, 
+            // o que ella lo use para avisarte.
+            const mensaje = encodeURIComponent("Hola amor, estoy usando la app. Solo quería decirte que te amo y que eres importante para mí. ❤️");
+            window.open(`https://wa.me/?text=${mensaje}`, '_blank');
+        }
+
+        renderHistorial();
+    </script>
+</body>
+</html>
