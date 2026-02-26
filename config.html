@@ -4,105 +4,207 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Focus - Configuración</title>
+    <link rel="stylesheet" href="style.css">
     <style>
-        :root { --acento: #00f2ff; --fondo: #0a0a0a; --tarjeta: #161616; }
-        body { background: var(--fondo); color: white; font-family: sans-serif; padding: 20px; }
+        :root { 
+            --acento: #00f2ff; 
+            --fondo: #0a0a0a; 
+            --tarjeta: #161616; 
+        }
         
-        .header-config { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; }
-        .btn-back { color: var(--acento); text-decoration: none; font-size: 1.2rem; }
+        body { background: var(--fondo); color: white; font-family: sans-serif; padding: 20px; padding-top: 80px; }
 
-        .config-card { background: var(--tarjeta); padding: 20px; border-radius: 20px; border: 1px solid #333; margin-bottom: 20px; }
+        /* HEADER FIJO COHERENTE */
+        #perfil-header { 
+            position: fixed; top: 0; left: 0; width: 100%; height: 70px; 
+            background: #0a0a0a; z-index: 1000; display: flex; 
+            align-items: center; padding: 0 20px; gap: 15px; 
+            border-bottom: 1px solid #1a1a1a; 
+        }
         
-        .avatar-edit { width: 100px; height: 100px; border-radius: 50%; background: #222; margin: 0 auto 20px; border: 2px solid var(--acento); position: relative; overflow: hidden; }
-        .avatar-edit img { width: 100%; height: 100%; object-fit: cover; }
-        .avatar-edit input { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+        #user-avatar-mini { 
+            width: 40px; height: 40px; border-radius: 50%; 
+            border: 2px solid var(--acento); object-fit: cover; 
+        }
 
-        label { display: block; font-size: 0.8rem; color: #888; margin-bottom: 5px; margin-left: 5px; }
-        input[type="text"], input[type="password"] { width: 100%; background: #222; border: 1px solid #444; color: white; padding: 12px; border-radius: 10px; margin-bottom: 15px; box-sizing: border-box; }
+        .btn-regresar { color: var(--acento); text-decoration: none; display: block; margin-bottom: 20px; font-weight: bold; }
 
-        .btn-guardar { background: var(--acento); color: black; border: none; padding: 15px; width: 100%; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        /* TARJETAS DE AJUSTES */
+        .config-card { 
+            background: var(--tarjeta); padding: 20px; border-radius: 20px; 
+            border: 1px solid #333; margin-bottom: 20px; 
+        }
         
-        .btn-danger { background: #ff4d6d; color: white; border: none; padding: 12px; width: 100%; border-radius: 12px; margin-top: 10px; cursor: pointer; }
+        .avatar-edit-container { 
+            width: 120px; height: 120px; border-radius: 50%; 
+            background: #222; margin: 0 auto 15px; border: 3px solid var(--acento); 
+            position: relative; overflow: hidden; box-shadow: 0 0 15px rgba(0, 242, 255, 0.2);
+        }
+        
+        .avatar-edit-container img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .avatar-edit-container input { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            opacity: 0; cursor: pointer; 
+        }
 
-        /* Selector de Temas */
-        .grid-temas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
-        .tema-opt { height: 40px; border-radius: 10px; cursor: pointer; border: 2px solid transparent; }
-        .tema-opt.selected { border-color: white; }
+        label { display: block; font-size: 0.8rem; color: #888; margin-bottom: 8px; margin-left: 5px; }
+        
+        input[type="text"], input[type="password"] { 
+            width: 100%; background: #222; border: 1px solid #444; 
+            color: white; padding: 12px; border-radius: 10px; 
+            margin-bottom: 20px; box-sizing: border-box; font-size: 1rem;
+        }
+
+        .btn-guardar { 
+            background: var(--acento); color: black; border: none; 
+            padding: 15px; width: 100%; border-radius: 12px; 
+            font-weight: bold; cursor: pointer; transition: 0.3s;
+        }
+
+        /* SELECTOR DE TEMAS */
+        .grid-temas { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 10px; }
+        .tema-opt { 
+            height: 45px; border-radius: 10px; cursor: pointer; 
+            border: 2px solid #333; transition: 0.3s; 
+        }
+        .tema-opt:active { transform: scale(0.9); }
+
+        .btn-danger { 
+            background: #ff4d6d; color: white; border: none; 
+            padding: 12px; width: 100%; border-radius: 12px; 
+            margin-top: 20px; cursor: pointer; font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-    <div class="header-config">
-        <a href="index.html" class="btn-back">←</a>
-        <h1>Ajustes</h1>
+    <div id="perfil-header">
+        <img id="user-avatar-mini" src="" alt="">
+        <h1 style="font-size: 1.2rem; color: var(--acento);">Configuración</h1>
     </div>
 
-    <div class="config-card">
-        <div class="avatar-edit">
-            <img id="img-preview" src="">
-            <input type="file" accept="image/*" onchange="cambiarFoto(this)">
+    <main>
+        <a href="index.html" class="btn-regresar">← Volver al Inicio</a>
+
+        <div class="config-card">
+            <div class="avatar-edit-container">
+                <img id="img-preview" src="">
+                <input type="file" id="input-foto" accept="image/*" onchange="procesarFoto(this)">
+            </div>
+            <p style="text-align: center; font-size: 0.75rem; color: #888; margin-bottom: 20px;">Toca el círculo para cambiar tu foto</p>
+
+            <label>Nombre de Usuario</label>
+            <input type="text" id="new-name" placeholder="Tu nombre">
+
+            <label>PIN de Seguridad (4 dígitos)</label>
+            <input type="password" id="new-pin" maxlength="4" inputmode="numeric">
+
+            <button class="btn-guardar" onclick="guardarCambios()">ACTUALIZAR PERFIL</button>
         </div>
-        <p style="text-align: center; font-size: 0.7rem; color: var(--acento);">Toca la foto para cambiarla</p>
 
-        <label>Nombre de Usuario</label>
-        <input type="text" id="new-name">
-
-        <label>PIN de Seguridad (4 dígitos)</label>
-        <input type="password" id="new-pin" maxlength="4">
-
-        <button class="btn-guardar" onclick="guardarCambios()">GUARDAR CAMBIOS</button>
-    </div>
-
-    <div class="config-card">
-        <label>Tema de Color</label>
-        <div class="grid-temas">
-            <div class="tema-opt" style="background: #00f2ff;" onclick="setTema('#00f2ff')"></div>
-            <div class="tema-opt" style="background: #ff4d6d;" onclick="setTema('#ff4d6d')"></div>
-            <div class="tema-opt" style="background: #a29bfe;" onclick="setTema('#a29bfe')"></div>
-            <div class="tema-opt" style="background: #00ff88;" onclick="setTema('#00ff88')"></div>
-            <div class="tema-opt" style="background: #f1c40f;" onclick="setTema('#f1c40f')"></div>
-            <div class="tema-opt" style="background: #ffffff;" onclick="setTema('#ffffff')"></div>
+        <div class="config-card">
+            <label>Tema Neón</label>
+            <div class="grid-temas">
+                <div class="tema-opt" style="background: #00f2ff;" onclick="setTema('#00f2ff')"></div>
+                <div class="tema-opt" style="background: #ff4d6d;" onclick="setTema('#ff4d6d')"></div>
+                <div class="tema-opt" style="background: #00ff88;" onclick="setTema('#00ff88')"></div>
+                <div class="tema-opt" style="background: #a29bfe;" onclick="setTema('#a29bfe')"></div>
+                <div class="tema-opt" style="background: #f1c40f;" onclick="setTema('#f1c40f')"></div>
+                <div class="tema-opt" style="background: #e67e22;" onclick="setTema('#e67e22')"></div>
+                <div class="tema-opt" style="background: #ffffff;" onclick="setTema('#ffffff')"></div>
+                <div class="tema-opt" style="background: #95a5a6;" onclick="setTema('#95a5a6')"></div>
+            </div>
         </div>
-    </div>
 
-    <button class="btn-danger" onclick="cerrarSesion()">CERRAR SESIÓN</button>
+        <button class="btn-danger" onclick="cerrarSesion()">CERRAR SESIÓN</button>
+    </main>
 
     <script>
+        // 1. Cargar datos iniciales
         const user = JSON.parse(localStorage.getItem('focus_user'));
+        const colorActual = localStorage.getItem('focus_color_tema') || '#00f2ff';
 
-        // Cargar datos actuales
-        document.getElementById('img-preview').src = user.photo;
-        document.getElementById('new-name').value = user.name;
-        document.getElementById('new-pin').value = user.pin;
+        if (user) {
+            document.getElementById('img-preview').src = user.photo;
+            document.getElementById('user-avatar-mini').src = user.photo;
+            document.getElementById('new-name').value = user.name;
+            document.getElementById('new-pin').value = user.pin;
+        }
 
-        function cambiarFoto(input) {
+        // Aplicar color de tema actual a la interfaz de config
+        document.documentElement.style.setProperty('--acento', colorActual);
+
+        // 2. Procesar y Comprimir Foto (Para que no falle el guardado)
+        function procesarFoto(input) {
             if (input.files && input.files[0]) {
                 const reader = new FileReader();
-                reader.onload = (e) => {
-                    document.getElementById('img-preview').src = e.target.result;
-                };
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_SIZE = 300; // Tamaño ideal para avatar
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_SIZE) {
+                                height *= MAX_SIZE / width;
+                                width = MAX_SIZE;
+                            }
+                        } else {
+                            if (height > MAX_SIZE) {
+                                width *= MAX_SIZE / height;
+                                height = MAX_SIZE;
+                            }
+                        }
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        // Convertir a base64 comprimido
+                        const fotoComprimida = canvas.toDataURL('image/jpeg', 0.7);
+                        document.getElementById('img-preview').src = fotoComprimida;
+                        document.getElementById('user-avatar-mini').src = fotoComprimida;
+                    }
+                }
                 reader.readAsDataURL(input.files[0]);
             }
         }
 
-        function setTema(color) {
-            localStorage.setItem('focus_color_tema', color);
-            alert("Color de tema seleccionado: " + color);
-        }
-
+        // 3. Guardar Cambios
         function guardarCambios() {
-            user.name = document.getElementById('new-name').value;
-            user.pin = document.getElementById('new-pin').value;
-            user.photo = document.getElementById('img-preview').src;
+            const name = document.getElementById('new-name').value;
+            const pin = document.getElementById('new-pin').value;
+            const photo = document.getElementById('img-preview').src;
 
-            localStorage.setItem('focus_user', JSON.stringify(user));
-            alert("Perfil actualizado correctamente");
+            if (!name || pin.length !== 4) {
+                alert("Nombre obligatorio y PIN debe ser de 4 dígitos.");
+                return;
+            }
+
+            const updatedUser = { name, pin, photo };
+            localStorage.setItem('focus_user', JSON.stringify(updatedUser));
+            
+            alert("¡Cambios guardados con éxito!");
             window.location.href = 'index.html';
         }
 
+        // 4. Cambiar Tema
+        function setTema(color) {
+            localStorage.setItem('focus_color_tema', color);
+            document.documentElement.style.setProperty('--acento', color);
+            alert("Tema actualizado. Se aplicará en toda la app.");
+        }
+
+        // 5. Cerrar Sesión
         function cerrarSesion() {
-            sessionStorage.removeItem('sesion_activa');
-            window.location.href = 'login.html';
+            if(confirm("¿Quieres cerrar sesión? Deberás ingresar tu PIN al volver.")) {
+                sessionStorage.removeItem('sesion_activa');
+                window.location.href = 'login.html';
+            }
         }
     </script>
 </body>
