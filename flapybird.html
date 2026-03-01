@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Focus Bird - Global Edition</title>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.17.1/firebase-firestore-compat.js"></script>
+    <style>
+        :root { --acento: #00f2ff; --fondo: #0a0a0a; --sombra-neon: rgba(0, 242, 255, 0.8); --carcasa: #111111; }
+        body, html { background: var(--fondo); color: white; margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; font-family: 'Arial Black', sans-serif; touch-action: none; }
+        
+        /* FIX: pointer-events none para que el canvas no bloquee los botones del menú */
+        canvas#menuCanvas { position: absolute; top: 0; left: 0; z-index: -1; pointer-events: none; }
+
+        .pantalla { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; background: var(--fondo); transition: opacity 0.5s; }
+        .oculto { display: none !important; }
+        
+        .titulo-juego { font-size: clamp(2rem, 6vw, 3rem); font-weight: 900; color: white; text-shadow: 0 0 20px var(--acento); margin-bottom: 1rem; letter-spacing: 5px; text-align: center; }
+        .menu-grid { display: grid; gap: 15px; width: 85%; max-width: 350px; z-index: 110; }
+        .btn-menu { background: transparent; border: 2px solid var(--acento); color: white; padding: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; border-radius: 12px; transition: all 0.3s; text-transform: uppercase; letter-spacing: 2px; position: relative; }
+        .btn-menu:hover { background: var(--acento); color: black; box-shadow: 0 0 20px var(--acento); }
+
+        #contenedor-juego { position: relative; width: 100vw; height: 100vh; background: #000; cursor: pointer; }
+        canvas#gameCanvas { display: block; width: 100%; height: 100%; }
+
+        #score-overlay { position: absolute; top: 10%; width: 100%; text-align: center; z-index: 20; pointer-events: none; }
+        #puntos-num { font-size: 5rem; font-weight: 900; color: white; text-shadow: 0 0 25px var(--acento); }
+
+        .mini-records { background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 15px; width: 80%; max-width: 300px; margin-bottom: 20px; border: 1px solid #333; }
+        .mini-records table { width: 100%; font-size: 0.9rem; border-collapse: collapse; }
+        .destacado { color: var(--acento); font-weight: bold; }
+
+        #bird-css { width: 60px; height: 45px; position: absolute; z-index: 10; pointer-events: none; left: 20%; top: 50%; transform: translateY(-50%); }
+        .cuerpo { width: 100%; height: 100%; background: linear-gradient(135deg, var(--carcasa), #000); border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%; border: 2.5px solid var(--acento); position: absolute; box-sizing: border-box; z-index: 5; filter: drop-shadow(0 0 8px var(--sombra-neon)); }
+        .ala { width: 38px; height: 22px; background: var(--carcasa); border: 2px solid var(--acento); border-radius: 0% 100% 0% 100%; position: absolute; top: 5px; left: -12px; z-index: 4; transform-origin: right center; animation: aleteo 0.12s infinite alternate; }
+        @keyframes aleteo { from { transform: rotate(15deg); } to { transform: rotate(-30deg); } }
+
+        #modal-record { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #111; padding: 30px; border: 3px solid var(--acento); border-radius: 20px; text-align: center; z-index: 200; display: none; box-shadow: 0 0 50px rgba(0,0,0,0.9); }
+        .shake { animation: shake 0.4s both; }
+        @keyframes shake { 0% { transform: translate(0,0); } 25% { transform: translate(-6px, 6px); } 50% { transform: translate(6px, -6px); } 100% { transform: translate(0,0); } }
+    </style>
+</head>
+<body>
+
+    <div id="pantalla-menu" class="pantalla">
+        <canvas id="menuCanvas"></canvas>
+        <h1 class="titulo-juego">FOCUS BIRD</h1>
+        <div class="menu-grid">
+            <button class="btn-menu" onclick="mostrarSeccion('pantalla-dificultad')">JUGAR</button>
+            <button class="btn-menu" onclick="verRecordsLocal()">RÉCORDS LOCALES</button>
+            <button class="btn-menu" onclick="verRecordsGlobal()" style="border-color: #ffda44; color: #ffda44;">TOP GLOBAL 🌍</button>
+            <button class="btn-menu" onclick="window.location.href='index.html'">SALIR</button>
+        </div>
+    </div>
+
+    <div id="pantalla-dificultad" class="pantalla oculto">
+        <h2 class="titulo-juego" style="font-size: 2rem;">DIFICULTAD</h2>
+        <div class="menu-grid">
+            <button class="btn-menu" onclick="iniciarPartida(1, 4.5)">NIVEL 1</button>
+            <button class="btn-menu" onclick="iniciarPartida(5, 6.5)">NIVEL 5</button>
+            <button class="btn-menu" onclick="iniciarPartida(10, 8.5)">NIVEL 10</button>
+            <button class="btn-menu" style="border-color: #666;" onclick="mostrarSeccion('pantalla-menu')">VOLVER</button>
+        </div>
+    </div>
+
+    <div id="pantalla-global" class="pantalla oculto">
+        <h2 class="titulo-juego" style="color: #ffda44;">MUNDIAL TOP 10</h2>
+        <table id="tabla-global" style="width: 80%; border-collapse: collapse; margin-bottom: 20px;"></table>
+        <button class="btn-menu" onclick="mostrarSeccion('pantalla-menu')">VOLVER</button>
+    </div>
+
+    <div id="pantalla-records" class="pantalla oculto">
+        <h2 class="titulo-juego" style="font-size: 2.5rem;">MEJORES LOCALES</h2>
+        <table id="tabla-records" style="width: 80%; border-collapse: collapse; margin-bottom: 20px;"></table>
+        <button class="btn-menu" onclick="mostrarSeccion('pantalla-menu')">VOLVER</button>
+    </div>
+
+    <div id="pantalla-gameover" class="pantalla oculto" style="background: rgba(10,10,10,0.95);">
+        <div class="mini-records" id="mini-board"></div>
+        <h2 class="titulo-juego" style="font-size: 2.5rem; color: #ff2d55;">FIN DEL JUEGO</h2>
+        <p id="score-final" style="font-size: 1.5rem; margin-bottom: 2rem; font-weight: bold;">TU PUNTUACIÓN: 0</p>
+        <div class="menu-grid">
+            <button class="btn-menu" onclick="autoRetry()">REINTENTAR</button>
+            <button class="btn-menu" style="border-color: #666;" onclick="mostrarSeccion('pantalla-menu')">MENÚ</button>
+        </div>
+    </div>
+
+    <div id="contenedor-juego" class="oculto">
+        <div id="score-overlay"><span id="puntos-num">0</span></div>
+        <div id="bird-css">
+            <div class="pico-bird" style="position: absolute; right: -15px; z-index: 4;"><div style="width: 22px; height: 14px; background-color: #fff; border-radius: 0 100% 0 0; position: absolute; top: 16px; right: 0; border: 1.5px solid var(--acento); border-left: none;"></div><div style="width: 16px; height: 10px; background-color: var(--acento); border-radius: 0 0 100% 0; position: absolute; top: 28px; right: 4px;"></div></div>
+            <div class="ala"></div>
+            <div class="cuerpo"><div style="width: 18px; height: 18px; background-color: #fff; border-radius: 50%; position: absolute; top: 8px; right: 12px; z-index: 7; display: flex; justify-content: center; align-items: center; border: 1.5px solid var(--acento);"><div style="width: 7px; height: 7px; background-color: #000; border-radius: 50%;"></div></div></div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+    </div>
+
+    <div id="modal-record">
+        <h2 style="color: var(--acento); margin:0;">¡NUEVO RÉCORD!</h2>
+        <input type="text" id="nombre-jugador" maxlength="10" placeholder="NOMBRE" style="background:#000; color:white; border:1px solid var(--acento); padding:10px; margin: 15px 0; text-align: center;">
+        <button class="btn-menu" onclick="guardarNombre()">GUARDAR</button>
+    </div>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyB0ahP8K53dm8BIRhjXYxCbSJ8sNfQi-NI",
+            authDomain: "refugio-de-patitas.firebaseapp.com",
+            projectId: "refugio-de-patitas",
+            storageBucket: "refugio-de-patitas.firebasestorage.app",
+            messagingSenderId: "5921473252",
+            appId: "1:5921473252:web:16f18c4c7cf1ad1509e2f1"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        const menuCanvas = document.getElementById("menuCanvas");
+        const mctx = menuCanvas.getContext("2d");
+        const gameCanvas = document.getElementById("gameCanvas");
+        const gctx = gameCanvas.getContext("2d");
+        const birdHTML = document.getElementById("bird-css");
+        const contenedor = document.getElementById("contenedor-juego");
+
+        let birdX, birdY, gravityNormal = 0.32, gravityDown = 0.9, curGrav = 0.32;
+        let velocity = 0, jump = -8, score = 0, nivel = 1, speed = 4.5, gameActive = false;
+        let lastNivel = 1, lastSpeed = 4.5;
+        let pipes = []; let particles = []; 
+        const pipeWidth = 90, pipeGap = 200;
+        const colores = ['#00f2ff', '#ff00ff', '#00ff00', '#ffff00', '#bf00ff', '#ff4d00'];
+        let colorIdx = 0; let ultimaAlturaY = 0;
+
+        // --- SISTEMA DE SONIDO AGREGADO ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let musicStarted = false; let currentStep = 0;
+
+        function playTone(f, d, v, t) {
+            const o = audioCtx.createOscillator(); const g = audioCtx.createGain();
+            o.type = t; o.frequency.setValueAtTime(f, audioCtx.currentTime);
+            g.gain.setValueAtTime(v, audioCtx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
+            o.connect(g); g.connect(audioCtx.destination);
+            o.start(); o.stop(audioCtx.currentTime + d);
+        }
+
+        function startMusic() {
+            if (musicStarted) return;
+            musicStarted = true;
+            const scheduler = () => {
+                if (!gameActive) { musicStarted = false; return; }
+                const base = [65.41, 73.42, 82.41, 87.31, 98.00, 110.00][colorIdx];
+                const melody = [1, 1.25, 1.5, 1.33, 1.5, 1.87, 2, 1.5];
+                playTone(base * melody[currentStep % 8], 0.4, 0.1, 'sawtooth');
+                if (currentStep % 2 === 0) playTone(50, 0.3, 0.25, 'sine');
+                currentStep++;
+                setTimeout(scheduler, Math.max(70, 190 - (nivel * 7)));
+            };
+            scheduler();
+        }
+
+        function startMenuSound() {
+            if (gameActive) return;
+            // Sonido de ambiente profundo para el menú
+            playTone(40 + Math.random() * 5, 2, 0.05, 'sine');
+            setTimeout(() => { if(!gameActive) startMenuSound(); }, 2000);
+        }
+
+        async function enviarAFirebase(nombre, puntos) {
+            try { await db.collection("top_global").add({ name: nombre, score: puntos, timestamp: firebase.firestore.FieldValue.serverTimestamp() }); } catch (e) { console.error(e); }
+        }
+
+        async function verRecordsGlobal() {
+            mostrarSeccion('pantalla-global');
+            const tabla = document.getElementById('tabla-global');
+            tabla.innerHTML = "<tr><td colspan='3'>Sincronizando...</td></tr>";
+            try {
+                const query = await db.collection("top_global").orderBy("score", "desc").limit(10).get();
+                let results = [];
+                query.forEach(doc => results.push(doc.data()));
+                results.push({ name: "Jonathan", score: 50 });
+                results.sort((a,b) => b.score - a.score);
+                let html = "";
+                results.slice(0, 10).forEach((r, i) => {
+                    const style = r.name === "Jonathan" ? "style='color:#ffda44;'" : "";
+                    html += `<tr ${style}><td class="destacado">#${i+1}</td><td>${r.name}</td><td style="text-align:right">${r.score}</td></tr>`;
+                });
+                tabla.innerHTML = html || "<tr><td>Sin datos</td></tr>";
+            } catch (e) { tabla.innerHTML = "<tr><td>Error</td></tr>"; }
+        }
+
+        let menuParts = [];
+        function initMenuParts() {
+            menuCanvas.width = window.innerWidth; menuCanvas.height = window.innerHeight;
+            menuParts = [];
+            for(let i=0; i<100; i++) menuParts.push({ x: menuCanvas.width/2, y: menuCanvas.height/2, a: Math.random()*Math.PI*2, s: Math.random()*4+1, l: Math.random() });
+            startMenuSound(); // Iniciar sonido ambiente al cargar menú
+        }
+        function drawMenuParticles() {
+            if(!document.getElementById("pantalla-menu").classList.contains("oculto")) {
+                mctx.fillStyle = 'rgba(10, 10, 10, 0.2)'; mctx.fillRect(0,0,menuCanvas.width, menuCanvas.height);
+                menuParts.forEach(p => {
+                    p.x += Math.cos(p.a)*p.s; p.y += Math.sin(p.a)*p.s;
+                    mctx.fillStyle = `rgba(0, 242, 255, ${p.l})`; mctx.fillRect(p.x, p.y, 2, 2);
+                    if(p.x<0||p.x>menuCanvas.width||p.y<0||p.y>menuCanvas.height) { p.x = menuCanvas.width/2; p.y = menuCanvas.height/2; }
+                });
+                requestAnimationFrame(drawMenuParticles);
+            }
+        }
+
+        function mostrarSeccion(id) {
+            document.querySelectorAll('.pantalla').forEach(p => p.classList.add('oculto'));
+            contenedor.classList.add('oculto');
+            document.getElementById(id).classList.remove('oculto');
+            if(id === 'pantalla-menu') { initMenuParts(); drawMenuParticles(); }
+        }
+
+        function verRecordsLocal() {
+            const data = JSON.parse(localStorage.getItem('birdRecords') || '[]');
+            const tabla = document.getElementById('tabla-records');
+            tabla.innerHTML = data.map((r, i) => `<tr><td class="destacado">#${i+1}</td><td>${r.name}</td><td style="text-align:right">${r.score}</td></tr>`).join('') || '<tr><td>SIN DATOS</td></tr>';
+            mostrarSeccion('pantalla-records');
+        }
+
+        function iniciarPartida(n, s) {
+            lastNivel = n; lastSpeed = s;
+            mostrarSeccion('contenedor-juego');
+            gameCanvas.width = window.innerWidth; gameCanvas.height = window.innerHeight;
+            birdX = gameCanvas.width * 0.2; birdY = gameCanvas.height / 2;
+            ultimaAlturaY = birdY; velocity = 0; score = 0; nivel = n; speed = s; pipes = [];
+            particles = []; 
+            document.getElementById('puntos-num').innerText = "0";
+            actualizarColor(colores[0]); gameActive = true; 
+            startMusic(); // Iniciar música rítmica
+            runGame();
+        }
+
+        function runGame() {
+            if(!gameActive) return;
+            gctx.fillStyle = "#000"; gctx.fillRect(0, 0, gameCanvas.width, gameCanvas.height);
+            const tema = getComputedStyle(document.documentElement).getPropertyValue('--acento').trim();
+            
+            const targetP = Math.min(150, (nivel * 20));
+            while(particles.length < targetP) {
+                particles.push({ 
+                    x: gameCanvas.width + 50, 
+                    y: Math.random()*gameCanvas.height, 
+                    w: Math.random()*25+10, 
+                    s: Math.random()*10+4, 
+                    op: Math.random()*0.6 
+                });
+            }
+            gctx.fillStyle = tema;
+            particles.forEach(p => { 
+                p.x -= p.s * (speed/4); 
+                gctx.globalAlpha = p.op; 
+                gctx.fillRect(p.x, p.y, p.w, 2.5); 
+                if(p.x < -50) p.x = gameCanvas.width + 50; 
+            });
+            gctx.globalAlpha = 1.0;
+
+            velocity += curGrav; birdY += velocity;
+            birdHTML.style.top = birdY + "px"; birdHTML.style.left = birdX + "px";
+            birdHTML.style.transform = `rotate(${Math.min(0.8, Math.max(-0.8, velocity * 0.12)) * 45}deg)`;
+            
+            const spawnDistance = pipes.length === 0 ? gameCanvas.width * 0.8 : 320;
+            if(pipes.length === 0 || pipes[pipes.length-1].x < gameCanvas.width - spawnDistance) {
+                const margenMaximo = 160;
+                let nuevaY = ultimaAlturaY + (Math.random()*300 - 150);
+                nuevaY = Math.max(100, Math.min(gameCanvas.height - pipeGap - 100, nuevaY));
+                ultimaAlturaY = nuevaY;
+                pipes.push({ x: gameCanvas.width, y: nuevaY, passed: false });
+            }
+            pipes.forEach((p, i) => {
+                p.x -= speed;
+                gctx.fillStyle = "#151515"; gctx.strokeStyle = tema; gctx.lineWidth = 4;
+                gctx.fillRect(p.x, 0, pipeWidth, p.y); gctx.strokeRect(p.x, 0, pipeWidth, p.y);
+                gctx.fillRect(p.x, p.y + pipeGap, pipeWidth, gameCanvas.height); gctx.strokeRect(p.x, p.y + pipeGap, pipeWidth, gameCanvas.height);
+                if(birdX+45 > p.x && birdX+5 < p.x+pipeWidth) { if(birdY < p.y || birdY+35 > p.y+pipeGap) endGame(); }
+                if(!p.passed && p.x+pipeWidth < birdX) {
+                    score++; p.passed = true; document.getElementById('puntos-num').innerText = score;
+                    if(score % 10 === 0) { 
+                        colorIdx = (colorIdx+1)%6; actualizarColor(colores[colorIdx]); nivel++; speed += 0.6;
+                        playTone(400, 0.2, 0.1, 'square'); // Sonido de nivel superado
+                        contenedor.classList.add('shake'); setTimeout(() => contenedor.classList.remove('shake'), 400);
+                    }
+                }
+            });
+            pipes = pipes.filter(p => p.x > -150);
+            if (birdY > gameCanvas.height || birdY < 0) endGame();
+            requestAnimationFrame(runGame);
+        }
+
+        function endGame() {
+            gameActive = false;
+            playTone(60, 0.8, 0.3, 'sawtooth'); // Sonido de muerte
+            musicStarted = false;
+            const data = JSON.parse(localStorage.getItem('birdRecords') || '[]');
+            const esTop10 = data.length < 10 || score > (data[9]?.score || 0);
+            if(esTop10) { 
+                document.getElementById('nombre-jugador').value = ''; // MODIFICADO: Campo vacío al abrir
+                document.getElementById('modal-record').style.display = 'block'; 
+            }
+            else { 
+                document.getElementById('score-final').innerText = "TU PUNTUACIÓN: " + score;
+                actualizarMiniBoard();
+                mostrarSeccion('pantalla-gameover'); 
+            }
+        }
+
+        function guardarNombre() {
+            const n = document.getElementById('nombre-jugador').value.toUpperCase() || 'ANÓN';
+            let data = JSON.parse(localStorage.getItem('birdRecords') || '[]');
+            data.push({ name: n, score: score }); data.sort((a,b) => b.score - a.score);
+            localStorage.setItem('birdRecords', JSON.stringify(data.slice(0, 10)));
+            enviarAFirebase(n, score);
+            document.getElementById('modal-record').style.display = 'none';
+            mostrarSeccion('pantalla-menu');
+        }
+
+        function autoRetry() {
+            document.getElementById('pantalla-gameover').classList.add('oculto');
+            iniciarPartida(lastNivel, lastSpeed);
+        }
+
+        function actualizarMiniBoard() {
+            const data = JSON.parse(localStorage.getItem('birdRecords') || '[]');
+            const board = document.getElementById('mini-board');
+            let html = '<p style="margin:0 0 10px 0; font-size:0.8rem; opacity:0.6;">HALL OF FAME (LOCAL)</p><table>';
+            for(let i=0; i<3; i++) {
+                const r = data[i] || { name: '---', score: 0 };
+                html += `<tr><td class="destacado">#${i+1}</td><td>${r.name}</td><td style="text-align:right">${r.score}</td></tr>`;
+            }
+            const r10 = data[9] || { name: '---', score: 0 };
+            html += `<tr style="border-top:1px solid #444"><td class="destacado">#10</td><td>${r10.name}</td><td style="text-align:right">${r10.score}</td></tr></table>`;
+            board.innerHTML = html;
+        }
+
+        function actualizarColor(c) {
+            document.documentElement.style.setProperty('--acento', c);
+            document.documentElement.style.setProperty('--sombra-neon', `${c}80`);
+        }
+
+        const pressStart = (e) => { 
+            e.preventDefault(); 
+            if(gameActive) { 
+                curGrav = gravityDown; 
+                playTone(200, 0.05, 0.05, 'sine'); // Sonido de descenso
+            } 
+        };
+        const pressEnd = (e) => { 
+            e.preventDefault(); 
+            if(gameActive) { 
+                curGrav = gravityNormal; velocity = jump; 
+                playTone(400, 0.1, 0.1, 'triangle'); // Sonido de salto
+            } 
+        };
+        contenedor.addEventListener("touchstart", pressStart, { passive: false });
+        contenedor.addEventListener("touchend", pressEnd, { passive: false });
+        contenedor.addEventListener("mousedown", pressStart);
+        contenedor.addEventListener("mouseup", pressEnd);
+        window.onload = () => { initMenuParts(); drawMenuParticles(); };
+    </script>
+</body>
+</html>
